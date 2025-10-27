@@ -29,7 +29,7 @@ int calcsqrt(int* restrict _sqrt, int d, int k, int z) {
 	int disc = calcdisc(d, k, z);
 	if (disc < 0)
 		return 0;
-	*_sqrt = sqrt(disc / 3.0);
+	*_sqrt = sqrt(disc / (3.0 * d));
 	return 1;
 }
 
@@ -44,7 +44,7 @@ int calcxy(int* restrict x, int* restrict y, int d, int k, int z) {
 }
 
 int checkxy(int x, int y, int z, int k) {
-	return (cb(x) - x + cb(y) - y + cb(z) - z == 6*k) && abs(x) >= 2 && abs(y) >= 2;
+	return (cb(x) - x + cb(y) - y + cb(z) - z == 6*k);
 }
 
 int _6xC3(int x) {
@@ -61,14 +61,14 @@ int basic(int z, int k) {
 	for (int d = 1; d <= kmcbzpm; ++d) {
 		if (kmcbzpm % d != 0)
 			continue;
-		if (!calcxy(&x, &y, d, k, z))
+		if (!calcxy(&x, &y, d, k, z+1))
 			continue;
-		if (!checkxy(x, y, z, k))
+		if (!checkxy(x, y, z+1, k))
 			continue;
 		/*
 		if(!checkxy(x+1, y+1, z+1, k))
 			continue; */
-		printf("%dC3 + %dC3 + %dC3 = %d; done w/ divisor %d\n", x, y, z, k, d);
+		printf("(%d)^3-(%d) + (%d)^3-(%d) + (%d)^3-(%d) = 6*%d; done w/ divisor %d\n", x, x, y, y, z, z, k, d);
 	}
 	return 0;
 }

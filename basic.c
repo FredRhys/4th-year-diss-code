@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <math.h>
+#include <stdlib.h>
 
-const int ZLIM = 100;
+const int ZLIM = 10;
 
 int abs(int x) {
 	return x >= 0 ? x : -x;
@@ -33,44 +34,58 @@ int calcsqrt(int* restrict _sqrt, int d, int k, int z) {
 }
 
 int calcxy(int* restrict x, int* restrict y, int d, int k, int z) {
-	const int sgnkz = sgn(k - cb(z) + z);
+	const float hlfsgnkz = 0.5 * sgn(k - cb(z) + z);
 	int sqrt;
-	if (calcsqrt(&sqrt, d, k, z)) {
-		if (sgnkz >= 0) {
-			*x = 0.5 * sgnkz * (d + sqrt);
-			*y = 0.5 * sgnkz * (d - sqrt);
-		} else {
-			*x = 0.5 * sgnkz * (d - sqrt);
-			*y = 0.5 * sgnkz * (d + sqrt);
-		}
-		return 1;
+	if (!calcsqrt(&sqrt, d, k, z))
+		return 0;
+	*x = hlfsgnkz * (d + sqrt);
+	*y = hlfsgnkz * (d - sqrt);
+	return 1;
+}
+
+int checkxy(int x, int y, int z, int k) {
+	return (cb(x) - x + cb(y) - y + cb(z) - z == 6*k) && abs(x) >= 2 && abs(y) >= 2;
+}
+
+int _6xC3(int x) {
+	return x * (x - 1) * (x - 2);
+}
+
+int checkxm1ym1(int x, int y, int z, int k) {
+	return (_6xC3(x) + _6xC3(y) + _6xC3(z) == 6*k);
+}
+
+int basic(int z, int k) {
+	const int kmcbzpm = abs(k - cb(z) + z);
+	int x, y;
+	for (int d = 1; d <= kmcbzpm; ++d) {
+		if (kmcbzpm % d != 0)
+			continue;
+		if (!calcxy(&x, &y, d, k, z))
+			continue;
+		if (!checkxy(x, y, z, k))
+			continue;
+		/*
+		if(!checkxy(x+1, y+1, z+1, k))
+			continue; */
+		printf("%dC3 + %dC3 + %dC3 = %d; done w/ divisor %d\n", x, y, z, k, d);
 	}
 	return 0;
 }
 
-int basic(int z, int k) {
-	int x, y;
-	for (int d = 1; d < k; ++d)
-		if (k % d == 0)
-			if (calcxy(&x, &y, d, k, z))
-				if (d == abs(x + y)) {
-					printf("%dC3 + %dC3 + %dC3 = %d\n", x, y, z, k);
-					return 1;
-				}
-	return 0;
-}
-
 int zloop(int k) {
-	for (int z = -ZLIM; z <= ZLIM; ++z)
-		if (basic(z, k))
-			return 1;
+	for (int z = -ZLIM; z <= ZLIM; ++z) {
+		if (-3 <= z && z <= 3)
+			continue;
+		basic(z, k);
+	}
 	return 0;
 }
 
 int main(int argc, char** argv) {
 	if (argc != 2)
 		return -1;
-	const int k = argv[1];
+	const int k = atoi(argv[1]);
 	zloop(k);
 	return 0;
 }

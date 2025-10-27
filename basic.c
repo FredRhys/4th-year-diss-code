@@ -61,22 +61,19 @@ int basic(int z, int k) {
 	for (int d = 1; d <= kmcbzpm; ++d) {
 		if (kmcbzpm % d != 0)
 			continue;
-		if (!calcxy(&x, &y, d, k, z+1))
+		if (!calcxy(&x, &y, d, k, z))
 			continue;
-		if (!checkxy(x, y, z+1, k))
+		if (!checkxy(x, y, z, k))
 			continue;
-		/*
-		if(!checkxy(x+1, y+1, z+1, k))
-			continue; */
-		printf("(%d)^3-(%d) + (%d)^3-(%d) + (%d)^3-(%d) = 6*%d; done w/ divisor %d\n", x, x, y, y, z, z, k, d);
+		if(!checkxm1ym1(x+1, y+1, z+1, k))
+			continue;
+		printf("(%d)C3 + (%d)C3 + (%d)C3 = %d\n", x+1, y+1, z+1, k);
 	}
 	return 0;
 }
 
 int zloop(int k) {
 	for (int z = -ZLIM; z <= ZLIM; ++z) {
-		if (-3 <= z && z <= 3)
-			continue;
 		basic(z, k);
 	}
 	return 0;

@@ -61,13 +61,11 @@ int basic(int z, int k) {
 	for (int d = 1; d <= kmcbzpm; ++d) {
 		if (kmcbzpm % d != 0)
 			continue;
-		if (!calcxy(&x, &y, d, k, z))
+		if (!calcxy(&x, &y, d, k, z-1))
 			continue;
-		if (!checkxy(x, y, z, k))
+		if (!checkxy(x, y, z-1, k))
 			continue;
-		if(!checkxm1ym1(x+1, y+1, z+1, k))
-			continue;
-		printf("(%d)C3 + (%d)C3 + (%d)C3 = %d\n", x+1, y+1, z+1, k);
+		printf("(%d)C3 + (%d)C3 + (%d)C3 = %d\n", x+1, y+1, z, k);
 	}
 	return 0;
 }

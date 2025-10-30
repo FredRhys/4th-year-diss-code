@@ -51,10 +51,6 @@ int _6xC3(int x) {
 	return x * (x - 1) * (x - 2);
 }
 
-int checkxm1ym1(int x, int y, int z, int k) {
-	return (_6xC3(x) + _6xC3(y) + _6xC3(z) == 6*k);
-}
-
 int basic(int z, int k) {
 	const int kmcbzpm = abs(k - cb(z) + z);
 	int x, y;

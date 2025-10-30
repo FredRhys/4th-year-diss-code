@@ -62,13 +62,19 @@ int basic(int z, int k) {
 		if (!checkxy(x, y, z-1, k))
 			continue;
 		printf("(%d)C3 + (%d)C3 + (%d)C3 = %d\n", x+1, y+1, z, k);
+		return 1;
 	}
 	return 0;
 }
 
 int zloop(int k) {
-	for (int z = -ZLIM; z <= ZLIM; ++z) {
-		basic(z, k);
+	if (basic(0, k))
+		return 0;
+	for (int z = 1; z <= ZLIM; ++z) {
+		if (basic(z, k))
+			return 0;
+		if (basic(-z, k))
+			return 0;
 	}
 	return 0;
 }

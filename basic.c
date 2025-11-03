@@ -83,6 +83,7 @@ int main(int argc, char** argv) {
 	if (argc != 2)
 		return -1;
 	const int k = atoi(argv[1]);
-	zloop(k);
+	for (int i = 1; i <= k; i++) 
+		zloop(i);
 	return 0;
 }

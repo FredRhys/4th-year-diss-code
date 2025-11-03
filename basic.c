@@ -69,12 +69,12 @@ int basic(int z, int k) {
 
 int zloop(int k) {
 	if (basic(0, k))
-		return 0;
+		return 1;
 	for (int z = 1; z <= ZLIM; ++z) {
 		if (basic(z, k))
-			return 0;
+			return 1;
 		if (basic(-z, k))
-			return 0;
+			return 1;
 	}
 	return 0;
 }

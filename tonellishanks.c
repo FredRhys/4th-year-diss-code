@@ -24,7 +24,7 @@ int main(int argc, char** argv) {
   if (argc != 3) {
     return 0;
   }
-  const int p = atoi(argv[1])/*, n = atoi(argv[2])*/;
+  const int p = atoi(argv[1]), n = atoi(argv[2]);
   int S, Q, z = 0;
   get2pwr(&S, &Q, p-1);
   mainloop(z, Q, S, n);

@@ -29,7 +29,7 @@ int calcsqrt(int* restrict _sqrt, int d, int k, int z) {
 	int disc = calcdisc(d, k, z);
 	if (disc < 0)
 		return 0;
-	*_sqrt = sqrt(disc / (3.0 * d));
+	*_sqrt = sqrt(disc / (3 * d));
 	return 1;
 }
 

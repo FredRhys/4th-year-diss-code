@@ -52,10 +52,10 @@ int _6xC3(int x) {
 }
 
 int basic(int z, int k) {
-	const int kmcbzpm = abs(k - cb(z) + z);
+	const int kmcbzpz = abs(k - cb(z) + z);
 	int x, y;
-	for (int d = 1; d <= kmcbzpm; ++d) {
-		if (kmcbzpm % d != 0)
+	for (int d = 1; d <= kmcbzpz; ++d) {
+		if (kmcbzpz % d != 0)
 			continue;
 		if (!calcxy(&x, &y, d, k, z-1))
 			continue;

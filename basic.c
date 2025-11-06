@@ -34,10 +34,10 @@ int calcsqrt(int* restrict _sqrt, int d, int k, int z) {
 }
 
 int calcxy(int* restrict x, int* restrict y, int d, int k, int z) {
-	const float hlfsgnkz = 0.5 * sgn(k - cb(z) + z);
 	int sqrt;
 	if (!calcsqrt(&sqrt, d, k, z))
 		return 0;
+	const float hlfsgnkz = 0.5 * sgn(k - cb(z) + z);
 	*x = hlfsgnkz * (d + sqrt);
 	*y = hlfsgnkz * (d - sqrt);
 	return 1;

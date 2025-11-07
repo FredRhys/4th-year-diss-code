@@ -2,11 +2,15 @@
 #include <stdlib.h>
 
 int is_even(int n) {
-  return (n & 0b1) == 0;
+  return (n & 0b1) == 0b0;
 }
 
 int is_odd(int n) {
-  return (n & 0b1) == 1;
+  return (n & 0b1) == 0b1;
+}
+
+int is_3mod4(int n) {
+  return (n & 0b11) == 0b11;
 }
 
 int get2pwr(int* restrict S, int* restrict Q, int x) {
@@ -52,7 +56,7 @@ int find_i(int t, int p) {
 }
 
 int mainloop(int p, int n) {
-  if ((p & 0b11) == 0b11) //i.e. p is 3 mod 4
+  if (is_3mod4(n))
     return mod_pow(n, (p+1)>>2, p);
   int S, Q, z = find_z(p);
   get2pwr(&S, &Q, p-1);

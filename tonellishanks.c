@@ -55,7 +55,7 @@ int find_i(int t, int p) {
   return i;
 }
 
-int mainloop(int p, int n) {
+int mod_sqrt(int p, int n) {
   if (is_3mod4(n))
     return mod_pow(n, (p+1)>>2, p);
   int S, Q, z = find_z(p);
@@ -90,6 +90,6 @@ int main(int argc, char** argv) {
     printf("%d is not a quadratic residue modulo %d.\n", n, p);
     return 0;
   }
-  printf("%d\n", mainloop(p, n));
+  printf("%d\n", mod_sqrt(p, n));
   return 0;
 }

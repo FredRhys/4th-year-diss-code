@@ -33,7 +33,7 @@ quotrem* save_quotrem(quotrem* end, int q, int r) {
 quotrem* calc_quotrems(quotrem* end, int a, int b) {
 	register int q = 0;
 	register int bdec_c= 0;
-	while (a != 1) {
+	while (a != b) {
 		if (a > b) {
 			a -= b;
 			++q;

@@ -1,12 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef struct quotrem {
-	int q;
-	int r;
-	struct quotrem* prev;
-} quotrem;
-
 int modpwr2(int x, int k) {
 	int mask = (0b1 << k) - 1;
 	return x & mask;
@@ -20,49 +14,24 @@ int find_k(int p) {
 	return k;
 }
 
-// creates new quotrem and returns its pointer.
-quotrem* save_quotrem(quotrem* end, int q, int r) {
-	quotrem* new = malloc(sizeof(quotrem));
-	new->q = q;
-	new->r = r;
-	new->prev = end;
-	return new;
+void par_ass(int* old_x, int* x, int q) {
+	int t = *x;
+	*x = *old_x - q * t;
+	*old_x = t;
 }
 
-// creates all the quotrems and returns the endpoint.
-quotrem* calc_quotrems(quotrem* end, int a, int b) {
-	register int q = 0;
-	register int bdec_c= 0;
-	while (a != b) {
-		if (a > b) {
-			a -= b;
-			++q;
-			bdec_c = 0;
-		}
-		else {
-			if (bdec_c == 0) {
-				end = save_quotrem(end, q, a);
-				q = 0;
-			}
-			else if (bdec_c > 1)
-				++q;
-			++bdec_c;
-			b -= a;
-		}
+// returns s s.t. as = 1 (mod b)
+int modinv(int a, int b) {
+	register int q;
+	int old_r = a, r = b, old_s = 1, s = 0;
+	while (r != 0) {
+		q = old_r / r;
+		par_ass(&old_r, &r, q);
+		par_ass(&old_s, &s, q);
 	}
-	return save_quotrem(end, q, a);
-}
-
-int find_q(int p, int k) {
-	quotrem* end = NULL, * temp;
-	end = calc_quotrems(end, 0b1<<k, p);
-	while (end != NULL) {
-		printf("%d, %d\n", end->q, end->r);
-		temp = end;
-		end = end->prev;
-		free(temp);
-	}
-	return 0;
+	while (old_s < 0)
+		old_s += b;
+	return old_s;
 }
 
 int modmult(int a, int b, int p) {
@@ -70,6 +39,5 @@ int modmult(int a, int b, int p) {
 }
 
 int main(void) {
-	find_q(13, 4);
 	return 0;
 }

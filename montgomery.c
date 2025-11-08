@@ -32,19 +32,25 @@ quotrem* save_quotrem(quotrem* end, int q, int r) {
 // creates all the quotrems and returns the endpoint.
 quotrem* calc_quotrems(quotrem* end, int a, int b) {
 	register int q = 0;
-	while (a != b) {
+	register int bdec_c= 0;
+	while (a != 1) {
 		if (a > b) {
 			a -= b;
 			++q;
+			bdec_c = 0;
 		}
 		else {
-			if (q > 0)
+			if (bdec_c == 0) {
 				end = save_quotrem(end, q, a);
-			q = 0;
+				q = 0;
+			}
+			else if (bdec_c > 1)
+				++q;
+			++bdec_c;
 			b -= a;
 		}
 	}
-	return end;
+	return save_quotrem(end, q, a);
 }
 
 int find_q(int p, int k) {
@@ -64,6 +70,6 @@ int modmult(int a, int b, int p) {
 }
 
 int main(void) {
-	find_q(17, 5);
+	find_q(13, 4);
 	return 0;
 }

@@ -22,6 +22,8 @@ void par_ass(int* old_x, int* x, int q) {
 
 // calculate the quotient of x / y
 int calc_q(int x, int y) {
+	if (y == 1)
+		return x;
 	register int q = 0;
 	while (x > 0) {
 		x -= y;

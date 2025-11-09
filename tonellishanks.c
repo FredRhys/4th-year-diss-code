@@ -1,21 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int is_even(int n) {
-  return (n & 0b1) == 0b0;
+int is_even(int x) {
+  return (x & 0b1) == 0b0;
 }
 
-int is_odd(int n) {
-  return (n & 0b1) == 0b1;
-}
-
-int is_3mod4(int n) {
-  return (n & 0b11) == 0b11;
+int is_3mod4(int x) {
+  return (x & 0b11) == 0b11;
 }
 
 int get2pwr(int* restrict S, int* restrict Q, int x) {
   register int i;
-  for (i = 0; is_odd(x); ++i) {
+  for (i = 0; is_even(x); ++i) {
     x = x >> 1;
   }
   *S = i;
@@ -44,39 +40,45 @@ int find_z(int p) {
 }
 
 int find_i(int t, int p) {
-  t = mod_pow(t, 2, p);
-  int run = 1, i = 1;
-  while (run){
-    ++i;
+  register int i = 0;
+  while (t != 1){
     t = mod_pow(t, 2, p);
-    if (t == 1)
-      run = 0;
+    ++i;
   }
   return i;
 }
 
-int mod_sqrt(int p, int n) {
-  if (is_3mod4(n))
-    return mod_pow(n, (p+1)>>2, p);
-  int S, Q, z = find_z(p);
-  get2pwr(&S, &Q, p-1);
-  // p is 1 mod 4
-  int M = S;
+// calculates the square root of n modulo p if it exists and returns affirmative. o/w returns negative
+int mod_sqrt(int* restrict r, int n, int p) {
+  if (legendre(n, p) == p - 1)
+    return 0;
+  else if (is_3mod4(p)) {
+    *r = mod_pow(n, (p+1)>>2, p);
+    return 1;
+  }
+  int M, Q, z = find_z(p);
+  get2pwr(&M, &Q, p-1);
   int c =  mod_pow(z, Q, p);
   int t = mod_pow(n, Q, p);
   int R = mod_pow(n, (Q + 1) >> 1, p);
   int i, b;
   while (t >= 0) {
-    if (t == 0)
-      return 0;
-    if (t == 1)
-      return R;
-    i = find_i(t, p);
-    M = i;
-    b = mod_pow(c, _pow(2, M - i - 1), p);
-    c = (b * b) % p;
-    t = (t * b * b) % p;
-    R = (R * b) % p;
+    if (t == 0) {
+      *r = 0;
+      return 1;
+    }
+    else if (t == 1) {
+      *r = R;
+      return 1;
+    }
+    else {
+      i = find_i(t, p);
+      b = mod_pow(c, _pow(2, M - i - 1), p);
+      M = i;
+      c = (b * b) % p;
+      t = (t * b * b) % p;
+      R = (R * b) % p;
+    }
   }
   return 0;
 }
@@ -86,10 +88,8 @@ int main(int argc, char** argv) {
     return 0;
   }
   const int n = atoi(argv[1]), p = atoi(argv[2]);
-  if (legendre(n, p) == p - 1) {
-    printf("%d is not a quadratic residue modulo %d.\n", n, p);
-    return 0;
-  }
-  printf("%d\n", mod_sqrt(p, n));
+  int r;
+  if (mod_sqrt(&r, n, p))
+    printf("%d\n", r);
   return 0;
 }

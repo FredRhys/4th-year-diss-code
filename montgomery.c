@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbit.h>
 
 int modpwr2(int x, int k) {
 	int mask = (0b1 << k) - 1;
@@ -14,30 +15,18 @@ int find_k(int p) {
 	return k;
 }
 
-void par_ass(int* old_x, int* x, int q) {
+void par_ass(int* restrict old_x, int* restrict x, int q) {
 	int t = *x;
 	*x = *old_x - q * t;
 	*old_x = t;
 }
 
-// calculate the quotient of x / y
-int calc_q(int x, int y) {
-	if (y == 1)
-		return x;
-	register int q = 0;
-	while (x > 0) {
-		x -= y;
-		++q;
-	}
-	return q;
-}
-
-// returns s s.t. as = 1 (mod b)
+// returns s s.t. as === 1 (mod b)
 int modinv(int a, int b) {
 	register int q;
 	int old_r = a, r = b, old_s = 1, s = 0;
 	while (r != 0) {
-		q = calc_q(old_r, r);
+		q = old_r/r;
 		par_ass(&old_r, &r, q);
 		par_ass(&old_s, &s, q);
 	}
@@ -51,5 +40,6 @@ int modmult(int a, int b, int p) {
 }
 
 int main(void) {
+	printf("%d\n", modinv(27, 5));
 	return 0;
 }

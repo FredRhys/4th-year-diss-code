@@ -4,6 +4,7 @@ CFLAGS = -std=c23\
 		 -g\
 		 -Wall\
 		 -Werror\
+		 -Wextra\
 		 -pedantic\
 		 -fsanitize=undefined\
 		 -fsanitize=address\

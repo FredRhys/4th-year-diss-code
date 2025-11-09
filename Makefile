@@ -18,7 +18,10 @@ basic:
 tonellishanks:
 	$(LD) $(CFLAGS) -o tonellishanks tonellishanks.c
 
-
 .PHONY: montgomery
 montgomery:
 	$(LD) $(CFLAGS) -o montgomery montgomery.c
+
+.PHONY: mod
+mod:
+	$(LD) $(CFLAGS) -o mod mod.c

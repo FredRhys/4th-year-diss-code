@@ -1,10 +1,12 @@
 #include <stdint.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef struct pair{
-  uint64_t fst, snd;
-}pair;
+// struct to represent ax^2 + bx + c
+typedef struct quad{
+  uint64_t a, b, c;
+}quad;
 
 // reduces a modulo m;
 static inline uint64_t red_mod(uint64_t a, uint64_t m) {
@@ -30,9 +32,11 @@ static inline uint64_t mul_mod(uint64_t a, uint64_t b, uint64_t m) {
 // calculates a to the power n modulo m
 static inline uint64_t pow_mod(uint64_t a, uint64_t n, uint64_t m) {
   register uint64_t r = 1;
+  if (n == 0)
+    return 1;
   while (n > 0) {
     r = mul_mod(r, a, m);
-    --n;
+    n -= 1;
   }
   return r;
 }
@@ -50,10 +54,11 @@ static inline int8_t is_quad_res(uint64_t a, uint64_t p) {
 // calculates the least t s.t. a^(2^t) is congruent to 1 modulo a prime
 // congruent to 1 modulo 4; returns 0 if this least is M.
 static inline uint64_t lst_pwr_2_mod(uint64_t a, uint64_t p, uint64_t M) {
-  for (uint64_t t = 0; t < M; ++t) {
+  for (register uint64_t t = 1; t < M; ++t) {
     a = mul_mod(a, a, p);
-    if (a == 1)
+    if (a == 1) {
       return t;
+    }
   }
   return 0;
 }
@@ -67,22 +72,22 @@ static inline uint64_t find_non_res_mod(uint64_t p) {
   return 0;
 }
 
-// finds a representation for positive a as S*2^Q
-pair find_2_pwr(uint64_t a) {
+// finds a representation for positive a as Q*2^S
+void find_2_pwr(uint64_t* restrict S, uint64_t* restrict Q, uint64_t a) {
   register uint64_t i = 0;
   for (i = 0; (a & 0b1) == 0; ++i) {
     a = a >> 1;
   }
-  return (pair){i, a};
+  *S = i;
+  *Q = a;
 }
 
 // runs the tonelli-shanks algorithm to calculate the square root of a
 // quadratic residue, a, modulo a prime congruent to 1 modulo 4, p
 uint64_t tonelli_shanks(uint64_t a, uint64_t p) {
-  register uint64_t M, z, c, t, R, i, b;
-  pair MQ = find_2_pwr(a);
-  M = MQ.fst;
-  const uint64_t Q = MQ.snd;
+  register uint64_t z, c, t, R, i, b;
+  uint64_t M, Q;
+  find_2_pwr(&M, &Q, p-1);
   z = find_non_res_mod(p);
   c = pow_mod(z, Q, p);
   t = pow_mod(a, Q, p);
@@ -113,14 +118,28 @@ uint64_t sqrt_mod(uint64_t a, uint64_t p) {
   return tonelli_shanks(a, p);
 }
 
+static inline quad add_quad(quad f, quad g, uint64_t p) {
+  return (quad){add_mod(f.a, g.a, p),
+    add_mod(f.a, g.a, p),
+    add_mod(f.a, g.a, p)};
+}
+
+static inline quad sub_quad(quad f, quad g, uint64_t p) {
+  return (quad){sub_mod(f.a, g.a, p),
+    sub_mod(f.a, g.a, p),
+    sub_mod(f.a, g.a, p)};
+}
+
 int main (int argc, char** argv) {
   if (argc != 3)
     return 0;
   const int a = atoi(argv[1]), p = atoi(argv[2]);
-  if (!is_quad_res(a, p)) {
-    printf("%d is not a quadratic residue modulo %d\n", a, p);
-    return 0;
+  for (int i = 1; i <= a; ++i) {
+    if (!is_quad_res(i, p)) {
+      printf("%d is not a quadratic residue modulo %d\n", i, p);
+      continue;
+    }
+    printf("sqrt(%d) modulo %d is %ld\n", i, p, sqrt_mod(i, p));
   }
-  printf("sqrt(%d) modulo %d is %ld\n", a, p, sqrt_mod(a, p));
   return 0;
 }

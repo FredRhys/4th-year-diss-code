@@ -27,7 +27,13 @@ int _pow(int x, int n) {
 }
 
 int mod_pow(int x, int n, int p) {
-  return (_pow(x, n)) % p;
+  while (n > 1) {
+    x = x*x;
+    if (x > p)
+      x = x % p;
+    --n;
+  }
+  return x;
 }
 
 int legendre(int a, int p) {
@@ -37,14 +43,14 @@ int legendre(int a, int p) {
 int find_z(int p) {
   int z;
   for (z = 2; z < p; ++z)
-    if (legendre(z, p) == p - 1)
+    if (legendre(z, p) != 1)
       return z;
   return 0;
 }
 
-int find_i(int t, int p) {
+int find_i(int t, int p, int M) {
   register int i = 0;
-  while (t != 1){
+  while (t != 1 && i < M){
     t = mod_pow(t, 2, p);
     ++i;
   }
@@ -63,6 +69,7 @@ int mod_sqrt(int* restrict r, int n, int p) {
   int c =  mod_pow(z, Q, p);
   int t = mod_pow(n, Q, p);
   int R = mod_pow(n, (Q + 1) >> 1, p);
+  //printf("%d\t%d\t%d\t%d\t%d\t%d\n", M, Q, z, c, t, R);
   int i, b;
   while (t >= 0) {
     if (t == 0) {
@@ -74,8 +81,8 @@ int mod_sqrt(int* restrict r, int n, int p) {
       return 1;
     }
     else {
-      i = find_i(t, p);
-      b = mod_pow(c, _pow(2, M - i - 1), p);
+      i = find_i(t, p, M);
+      b = mod_pow(c, mod_pow(2, M-i-1, p-1), p);
       M = i;
       c = (b * b) % p;
       t = (t * b * b) % p;
@@ -102,7 +109,13 @@ void par_ass(int* restrict old_x, int* restrict x, int q) {
 // returns s s.t. as === 1 (mod b)
 int mod_inv(int a, int b) {
 	register int q;
-	int old_r = a, r = b, old_s = 1, s = 0;
+	int old_r, r, old_s, s;
+  if (a >= b) {
+    old_r = a, r = b, old_s = 1, s = 0;
+  }
+  else {
+    old_r = b, r = a, old_s = 0, s = 1;
+  }
 	while (r != 0) {
 		q = old_r/r; // would like to replace
 		par_ass(&old_r, &r, q);
@@ -126,13 +139,15 @@ void get3pwr(int* restrict k, int* restrict t, int* restrict e, int p) {
 
 void find_u(int* restrict u, int* restrict r, int k, int t, int e, int p) {
  while (*r != 1) {
-    *r = mod_pow(*u, _pow(3, k-1) * (3 * t - e), p);
+    *r = mod_pow(*u, mod_pow(3, k-1, p-1) * (3 * t - e), p);
     ++(*u);
   }
 }
 
 int find_m(int b, int p) {
   register int i = 0;
+  printf("Here now!\n");
+  printf("%d\n", b);
   while (b != 1) {
     b = (b * b * b) % p;
     ++i;
@@ -140,9 +155,10 @@ int find_m(int b, int p) {
   return i;
 }
 
+// problem here for p = 29
 int mod_cbrt(int* restrict res, int a, int p) {
 	if (p % 3 == 2) {// barret reduction
-		*res = mod_pow(a, (2 * p - 1) / 3, p);
+		*res = mod_pow(a, ((2*p-1)/3)%(p-1), p);
 		return 1;
 	}
   // p === 1 mod 3
@@ -157,7 +173,7 @@ int mod_cbrt(int* restrict res, int a, int p) {
   while (b % p != 1) {
     m = find_m(b, p);
     s = b == r ? 1 : -1;
-    d = mod_pow(z, _pow(3, k - m - 1), p);
+    d = mod_pow(z, mod_pow(3, k-m-1, p-1), p);
     tau = (sigma * s) % 3;
     f = mod_pow(d, tau, p);
 
@@ -167,6 +183,7 @@ int mod_cbrt(int* restrict res, int a, int p) {
     x = (x * f) % p;
     k = m;
     sigma = s;
+    //printf("%d\t%d\t%d\t%d\t%d\n", m, s, d, tau, f);
   }
   if (e == 1)
     *res = x;
@@ -176,7 +193,7 @@ int mod_cbrt(int* restrict res, int a, int p) {
 }
 
 int main(void) {
-	const int k = 2, p = 7;
+	const int k = 1, p = 29;
 	int r1, r2, r3, z;
 	if (!mod_sqrt(&r1, 9 * k * k - mod_inv(27, p), p)) {
     printf("No square root.\n");
@@ -186,10 +203,12 @@ int main(void) {
     printf("No cube root (1).\n");
 		return 0;
   }
+  printf("%d\n", r2);
 	if (!mod_cbrt(&r3, 3 * k - r1, p)) {
     printf("No cube root (2).\n");
 		return 0;
   }
+  printf("%d\n", r3);
 	z = r2 + r3;
 	if (z > p)
 		z -= p;

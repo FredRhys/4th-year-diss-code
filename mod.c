@@ -1,217 +1,117 @@
+#include <stdint.h>
 #include <stdio.h>
 
-int modpwr2(int x, int k) {
-	int mask = (0b1 << k) - 1;
-	return x & mask;
+// reduces a modulo m;
+static inline uint64_t red_mod(uint64_t a, uint64_t m) {
+  return a >= m ? a % m : a;
 }
 
-int is_even(int x) {
-  return modpwr2(x, 1) == 0b0;
+// calculates a plus b modulo m
+static inline uint64_t add_mod(uint64_t a, uint64_t b, uint64_t m) {
+  const uint64_t SUM = a + b;
+  return SUM >= m ? SUM - m : SUM;
 }
 
-int is_3mod4(int x) {
-  return modpwr2(x, 2) == 0b11;
+// calculates a minus b modulo m
+static inline uint64_t sub_mod(uint64_t a, uint64_t b, uint64_t m) {
+  return a < b ? m + a - b : a - b;
 }
 
-void get2pwr(int* restrict S, int* restrict Q, int x) {
-  register int i;
-  for (i = 0; is_even(x); ++i) {
-    x = x >> 1;
-  }
-  *S = i;
-  *Q = x;
+// calculates a times b modulo m
+static inline uint64_t mul_mod(uint64_t a, uint64_t b, uint64_t m) {
+  return red_mod((__uint128_t) a * b, m);
 }
 
-int _pow(int x, int n) {
-  return n == 0 ? 1 : x * _pow(x, n - 1);
-}
-
-int mod_pow(int x, int n, int p) {
-  while (n > 1) {
-    x = x*x;
-    if (x > p)
-      x = x % p;
+// calculates a to the power n modulo m
+static inline uint64_t pow_mod(uint64_t a, uint64_t n, uint64_t m) {
+  register uint64_t r = 1;
+  while (n > 0) {
+    r = mul_mod(r, a, m);
     --n;
   }
-  return x;
+  return r;
 }
 
-int legendre(int a, int p) {
-  return mod_pow(a, (p-1)>>1, p);
+// calculates the inverse of 2 modulo an odd prime, p
+static inline uint64_t half_mod(uint64_t p) {
+  return (p>>1) + 1;
 }
 
-int find_z(int p) {
-  int z;
-  for (z = 2; z < p; ++z)
-    if (legendre(z, p) != 1)
+// calculates the legendre symbol of a and b.
+static inline int8_t legendre(uint64_t a, uint64_t p) {
+  printf("%ld\n", pow_mod(a, (p-1)>>1, p));
+  return pow_mod(a, (p-1)>>1, p) == 1 ? 1 : -1;
+}
+
+// calculates the least t s.t. a^(2^t) is congruent to 1 modulo a prime
+// congruent to 1 modulo 4; returns 0 if this least is M.
+static inline uint64_t lst_pwr_2_mod(uint64_t a, uint64_t p, uint64_t M) {
+  for (uint64_t t = 0; t < M; ++t) {
+    a = mul_mod(a, a, p);
+    if (a == 1)
+      return t;
+  }
+  return 0;
+}
+
+// returns a quadratic non-residue modulo an odd prime, p, if it exists (which
+// it does); returns 0 if it doesn't exist (which it does).
+static inline uint64_t find_non_res_mod(uint64_t p) {
+  for (register uint64_t z = 2; z < p; ++z)
+    if (legendre(z, p) == -1)
       return z;
   return 0;
 }
 
-int find_i(int t, int p, int M) {
+// finds a representation for positive a as S*2^Q
+void set_2_pwr(uint64_t* restrict S, uint64_t* restrict Q, int a) {
   register int i = 0;
-  while (t != 1 && i < M){
-    t = mod_pow(t, 2, p);
-    ++i;
+  for (i = 0; (a & 0b1) == 0; ++i) {
+    a = a >> 1;
   }
-  return i;
+  *S = i;
+  *Q = a;
 }
 
-int mod_sqrt(int* restrict r, int n, int p) {
-  if (legendre(n, p) == p - 1)
-    return 0;
-  else if (is_3mod4(p)) {
-    *r = mod_pow(n, (p+1)>>2, p);
-    return 1;
-  }
-  int M, Q, z = find_z(p);
-  get2pwr(&M, &Q, p-1);
-  int c =  mod_pow(z, Q, p);
-  int t = mod_pow(n, Q, p);
-  int R = mod_pow(n, (Q + 1) >> 1, p);
-  //printf("%d\t%d\t%d\t%d\t%d\t%d\n", M, Q, z, c, t, R);
-  int i, b;
-  while (t >= 0) {
-    if (t == 0) {
-      *r = 0;
-      return 1;
-    }
-    else if (t == 1) {
-      *r = R;
-      return 1;
-    }
+// runs the tonelli-shanks algorithm to calculate the square root of a
+// quadratic residue, a, modulo a prime congruent to 1 modulo 4, p
+uint64_t tonelli_shanks(uint64_t a, uint64_t p) {
+  uint64_t M, Q;
+  register uint64_t z, c, t, R, i, b;
+  set_2_pwr(&M, &Q, a);
+  z = find_non_res_mod(p);
+  c = pow_mod(z, Q, p);
+  t = pow_mod(a, Q, p);
+  R = pow_mod(a, (Q+1)>>1, p);
+  while (t > 0) {
+    if (t == 1)
+      return R;
     else {
-      i = find_i(t, p, M);
-      b = mod_pow(c, mod_pow(2, M-i-1, p-1), p);
+      i = lst_pwr_2_mod(a, p, M);
+      b = pow_mod(c, pow_mod(2, M-i-1, p-1), p);
       M = i;
-      c = (b * b) % p;
-      t = (t * b * b) % p;
-      R = (R * b) % p;
+      c = pow_mod(b, 2, p);
+      t = mul_mod(t, c, p);
+      R = mul_mod(R, b, p);
     }
   }
   return 0;
 }
 
-int find_k(int p) {
-	register int R = 1;
-	register int k = 0;
-	for (k = 0; R <= p; ++k)
-		R = R << 1;
-	return k;
+// calculates the square root of a quadratic residue, a, modulo an odd prime,
+// p.
+uint64_t sqrt_mod(uint64_t a, uint64_t p) {
+  if (a == 0)
+    return 0;
+  if ((p & 0b11) == 0b11) // i.e., p is congruent to 3 modulo 4
+    return pow_mod(a, (p+1)>>2, p);
+  // hence, p is congruent to 1 modulo 4
+  return tonelli_shanks(a, p);
 }
 
-void par_ass(int* restrict old_x, int* restrict x, int q) {
-	int t = *x;
-	*x = *old_x - q * t;
-	*old_x = t;
-}
-
-// returns s s.t. as === 1 (mod b)
-int mod_inv(int a, int b) {
-	register int q;
-	int old_r, r, old_s, s;
-  if (a >= b) {
-    old_r = a, r = b, old_s = 1, s = 0;
-  }
-  else {
-    old_r = b, r = a, old_s = 0, s = 1;
-  }
-	while (r != 0) {
-		q = old_r/r; // would like to replace
-		par_ass(&old_r, &r, q);
-		par_ass(&old_s, &s, q);
-	}
-	while (old_s < 0)
-		old_s += b;
-	return old_s;
-}
-
-void get3pwr(int* restrict k, int* restrict t, int* restrict e, int p) {
-  int q = p - 1;
-  while (q % 3 == 0) {
-    ++(*k);
-    q = q / 3;
-  }
-  // q = p-1/(3^k) by the end.
-  *e = q % 3 == 1 ? -1 : 1;
-  *t = (q + *e) / 3;
-}
-
-void find_u(int* restrict u, int* restrict r, int k, int t, int e, int p) {
- while (*r != 1) {
-    *r = mod_pow(*u, mod_pow(3, k-1, p-1) * (3 * t - e), p);
-    ++(*u);
-  }
-}
-
-int find_m(int b, int p) {
-  register int i = 0;
-  printf("Here now!\n");
-  printf("%d\n", b);
-  while (b != 1) {
-    b = (b * b * b) % p;
-    ++i;
-  }
-  return i;
-}
-
-// problem here for p = 29
-int mod_cbrt(int* restrict res, int a, int p) {
-	if (p % 3 == 2) {// barret reduction
-		*res = mod_pow(a, ((2*p-1)/3)%(p-1), p);
-		return 1;
-	}
-  // p === 1 mod 3
-  int k = 0, t, e, u = 2, r = 0;
-  get3pwr(&k, &t, &e, p);
-  find_u(&u, &r, k, t, e, p);
-  int x = mod_pow(a, t, p);
-  int b = mod_pow(a, 3 * t - e, p);
-  int z = mod_pow(u, 3 * t - e, p);
-  int sigma = 1;
-  int m, s, d, tau, f;
-  while (b % p != 1) {
-    m = find_m(b, p);
-    s = b == r ? 1 : -1;
-    d = mod_pow(z, mod_pow(3, k-m-1, p-1), p);
-    tau = (sigma * s) % 3;
-    f = mod_pow(d, tau, p);
-
-    //Update
-    z = mod_pow(f, 3, p);
-    b = (b * z) % p;
-    x = (x * f) % p;
-    k = m;
-    sigma = s;
-    //printf("%d\t%d\t%d\t%d\t%d\n", m, s, d, tau, f);
-  }
-  if (e == 1)
-    *res = x;
-  else
-    *res = mod_inv(x, p);
-  return 1;
-}
-
-int main(void) {
-	const int k = 1, p = 29;
-	int r1, r2, r3, z;
-	if (!mod_sqrt(&r1, 9 * k * k - mod_inv(27, p), p)) {
-    printf("No square root.\n");
-		return 0;
-  }
-	if (!mod_cbrt(&r2, 3 * k + r1, p)) {
-    printf("No cube root (1).\n");
-		return 0;
-  }
-  printf("%d\n", r2);
-	if (!mod_cbrt(&r3, 3 * k - r1, p)) {
-    printf("No cube root (2).\n");
-		return 0;
-  }
-  printf("%d\n", r3);
-	z = r2 + r3;
-	if (z > p)
-		z -= p;
-	printf("z=%d\n", z);
-	return 0;
+int main (void) {
+  const int P = 7, A = 5;
+  if (legendre(A, P) == 1)
+    printf("%ld\n", sqrt_mod(A, P));
+  return 0;
 }

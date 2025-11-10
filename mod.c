@@ -79,19 +79,21 @@ pair find_2_pwr(uint64_t a) {
 // runs the tonelli-shanks algorithm to calculate the square root of a
 // quadratic residue, a, modulo a prime congruent to 1 modulo 4, p
 uint64_t tonelli_shanks(uint64_t a, uint64_t p) {
-  register uint64_t z, c, t, R, i, b;
+  register uint64_t M, z, c, t, R, i, b;
   pair MQ = find_2_pwr(a);
+  M = MQ.fst;
+  const uint64_t Q = MQ.snd;
   z = find_non_res_mod(p);
-  c = pow_mod(z, MQ.snd, p);
-  t = pow_mod(a, MQ.snd, p);
-  R = pow_mod(a, (MQ.snd+1)>>1, p);
+  c = pow_mod(z, Q, p);
+  t = pow_mod(a, Q, p);
+  R = pow_mod(a, (Q+1)>>1, p);
   while (t > 0) {
     if (t == 1)
       return R;
     else {
-      i = lst_pwr_2_mod(a, p, MQ.fst);
-      b = pow_mod(c, pow_mod(2, MQ.fst-i-1, p-1), p);
-      MQ.fst = i;
+      i = lst_pwr_2_mod(a, p, M);
+      b = pow_mod(c, pow_mod(2, M-i-1, p-1), p);
+      M = i;
       c = pow_mod(b, 2, p);
       t = mul_mod(t, c, p);
       R = mul_mod(R, b, p);

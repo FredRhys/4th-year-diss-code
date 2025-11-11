@@ -134,12 +134,10 @@ int main (int argc, char** argv) {
   if (argc != 3)
     return 0;
   const int a = atoi(argv[1]), p = atoi(argv[2]);
-  for (int i = 1; i <= a; ++i) {
-    if (!is_quad_res(i, p)) {
-      printf("%d is not a quadratic residue modulo %d\n", i, p);
-      continue;
-    }
-    printf("sqrt(%d) modulo %d is %ld\n", i, p, sqrt_mod(i, p));
+  if (!is_quad_res(a, p)) {
+    printf("%d is not a quadratic residue modulo %d\n", a, p);
+    return 0;
   }
+  printf("sqrt(%d) modulo %d is %ld\n", a, p, sqrt_mod(a, p));
   return 0;
 }

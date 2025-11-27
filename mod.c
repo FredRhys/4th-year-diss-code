@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// struct to represent ax^2 + bx + c
+// struct to represent ax^2 + bx + c modulo x^3 - x - 6k
 typedef struct quad{
   uint64_t a, b, c;
 }quad;
@@ -47,7 +47,7 @@ static inline uint64_t half_mod(uint64_t p) {
 }
 
 // calculates the legendre symbol of a and b.
-static inline int8_t is_quad_res(uint64_t a, uint64_t p) {
+static inline uint8_t is_quad_res(uint64_t a, uint64_t p) {
   return pow_mod(a, (p-1)>>1, p) == p-1 ? 0 : 1;
 }
 
@@ -130,6 +130,29 @@ static inline quad sub_quad(quad f, quad g, uint64_t p) {
     sub_mod(f.a, g.a, p)};
 }
 
+static inline add_3_mod(uint64_t a,
+                        uint64_t b,
+                        uint64_t c, 
+                        uint64_t d,
+                        uint64_t m) {
+  return add_mod(add_mod(a, b, m), add_mod(c, d, m), m);
+}
+
+static inline quad mul_quad(quad f, quad g, uint64_t m, uint64_t k) {
+  const uint64_t AD = mul_mod(f.a, g.a, m),
+                 BE = mul_mod(f.b, g.b, m),
+                 CF = mul_mod(f.c, g.c, m),
+                 ApBmDpE = mul_mod(add_mod(f.a, f.b, m), add_mod(g.a, g.b, m), m),
+                 BpCmEpF = mul_mod(add_mod(f.b, f.c, m), add_mod(g.b, g.c, m), m),
+                 ApCmDpF = mul_mod(add_mod(f.a, g.a, m), add_mod(g.a, g.c, m), m);
+  return (quad){add_mod(AD,
+                add_mod(BE,
+                sub_mod(sub_mod(ApCmDpF, AD, m), CF, m), m), m),
+              0, 0};
+}
+
+
+// need to check if coprime
 int main (int argc, char** argv) {
   if (argc != 3)
     return 0;

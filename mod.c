@@ -130,25 +130,19 @@ static inline quad sub_quad(quad f, quad g, uint64_t p) {
     sub_mod(f.a, g.a, p)};
 }
 
-static inline add_3_mod(uint64_t a,
-                        uint64_t b,
-                        uint64_t c, 
-                        uint64_t d,
-                        uint64_t m) {
-  return add_mod(add_mod(a, b, m), add_mod(c, d, m), m);
-}
-
 static inline quad mul_quad(quad f, quad g, uint64_t m, uint64_t k) {
   const uint64_t AD = mul_mod(f.a, g.a, m),
                  BE = mul_mod(f.b, g.b, m),
                  CF = mul_mod(f.c, g.c, m),
+                 _6k = mul_mod(6, k, m),
+                 _6kAD = mul_mod(_6k, AD, m),
                  ApBmDpE = mul_mod(add_mod(f.a, f.b, m), add_mod(g.a, g.b, m), m),
                  BpCmEpF = mul_mod(add_mod(f.b, f.c, m), add_mod(g.b, g.c, m), m),
-                 ApCmDpF = mul_mod(add_mod(f.a, g.a, m), add_mod(g.a, g.c, m), m);
-  return (quad){add_mod(AD,
-                add_mod(BE,
-                sub_mod(sub_mod(ApCmDpF, AD, m), CF, m), m), m),
-              0, 0};
+                 ApCmDpF = mul_mod(add_mod(f.a, g.a, m), add_mod(g.a, g.c, m), m),
+                 _6kconstant = mul_mod(_6k, sub_mod(sub_mod(ApBmDpE, AD, m), BE, m), m);
+  return (quad){sub_mod(add_mod(BE, ApCmDpF, m), CF, m),
+                add_mod(_6kAD, add_mod(sub_mod(sub_mod(ApBmDpE, AD, m), BE, m), sub_mod(sub_mod(BpCmEpF, BE, m), CF, m), m), m),
+                add_mod(_6kconstant, CF, m)};
 }
 
 

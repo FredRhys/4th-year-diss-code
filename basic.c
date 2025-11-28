@@ -9,7 +9,7 @@ uint64_t _abs(int64_t x) {
 
 // might change to a 96 bit type
 __int128_t cb(int64_t x){
-	return (__int128_t)x * (__int128_t)x * (__int128_t)x;
+	return (__int128_t)(x * (__int128_t)(x * x));
 }
 
 int8_t sgn(int64_t x) {

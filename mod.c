@@ -3,10 +3,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// struct to represent ax^2 + bx + c modulo x^3 - x - 6k
+// struct to represent ax^2 + bx + c with a, b, c residues of some prime, p
 typedef struct quad{
   uint64_t a, b, c;
 }quad;
+
+typedef struct coeff{
+  uint64_t degree, coeff;
+  coeff* next;
+}coeff;
 
 // reduces a modulo m;
 static inline uint64_t red_mod(uint64_t a, uint64_t m) {
@@ -89,6 +94,8 @@ uint64_t tonelli_shanks(uint64_t a, uint64_t p) {
   uint64_t M, Q;
   find_2_pwr(&M, &Q, p-1);
   z = find_non_res_mod(p);
+  if (z == 0)
+    return 0; // this will never happen; here for completeness
   c = pow_mod(z, Q, p);
   t = pow_mod(a, Q, p);
   R = pow_mod(a, (Q+1)>>1, p);

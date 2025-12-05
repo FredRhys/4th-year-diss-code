@@ -3,11 +3,18 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#define TRUE 1
+
+
+//verbatim from factor64
+int initfactor64(const char*);
+int factor64(uint64_t*, int*, uint64_t*);
+int isprime64(uint64_t);
+
 uint64_t _abs(int64_t x) {
 	return x >= 0 ? x : -x;
 }
 
-// might change to a 96 bit type
 __int128_t cb(int64_t x){
 	return (__int128_t)(x * (__int128_t)(x * x));
 }
@@ -51,17 +58,31 @@ uint8_t checkxy(int64_t x, int64_t y, int64_t z, int64_t k) {
 	return (cb(x) - x + cb(y) - y + cb(z) - z == 6*k);
 }
 
+uint8_t check_d(int64_t* restrict x, int64_t* restrict y, int64_t _z, int d, int64_t k) {
+	if (!calcxy(x, y, d, k, _z))
+		return 0;
+	if (!checkxy(*x, *y, _z, k))
+		return 0;
+	return 1;
+}
+
+
 int basic(int64_t z, int64_t k) {
-	const uint64_t kmcbzpz = _abs(k - cb(z) + z);
+	uint64_t kmcbzpz = _abs(k - cb(z) + z), d = 1, p[15];
 	int64_t x, y;
-	for (uint64_t d = 1; d <= kmcbzpz; ++d) {
-		if (kmcbzpz % d != 0)
+	int _k, e[15];
+	_k = factor64(p, e, &kmcbzpz);
+
+	for (int64_t i = 0; i <= (0b1<<_k) - 1; ++i) {
+		d = 1;
+		for (uint8_t j = 0b1; j <= _k - 1; j++) {
+			d *= ((0b1<<j) & i) ? e[j] : 1;
+		}
+		if (d == 0)
 			continue;
-		if (!calcxy(&x, &y, d, k, z-1))
+		if (!check_d(&x, &y, z-1, d, k))
 			continue;
-		if (!checkxy(x, y, z-1, k))
-			continue;
-		//printf("(%ld)C3 + (%ld)C3 + (%d)C3 = %ld\n", x+1, y+1, z, k);
+		//printf("(%ld)C3 + (%ld)C3 + (%ld)C3 = %ld\n", x+1, y+1, z, k);
 		return 1;
 	}
 	return 0;
@@ -80,10 +101,6 @@ uint8_t zloop(int64_t k) {
 }
 
 void kloop(int64_t kLIM) {
-	/*const uint16_t BUFFER_LIM = 100;
-	int64_t buffer[BUFFER_LIM];
-	uint64_t end = 0;
-	FILE* f = fopen("hardks.txt", "wb");*/
 	const uint16_t cLIM = 40;
 	uint16_t c = 0;
 	for (int64_t k = 1; k <= kLIM; ++k) {
@@ -94,19 +111,17 @@ void kloop(int64_t kLIM) {
 				c = 0;
 			}
 		}
-		/*if (end == BUFFER_LIM) {
-			fwrite(buffer, 64, BUFFER_LIM, f);
-			end = 0;	
-		}*/
 	}
-	/*fwrite(buffer, 64, end, f);
-	fclose(f);*/
 	putchar('\n');
 }
 
 int main(int argc, char** argv) {
 	if (argc != 2)
 		return -1;
+	if (initfactor64("factor.bin") < 0) {
+		fprintf(stderr, "Cannot read factor data\n");
+		return -1;
+	}
 	const int64_t k_LIM = atoi(argv[1]);
 	kloop(k_LIM);
 	return 0;

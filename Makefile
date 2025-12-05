@@ -8,11 +8,11 @@ CFLAGS = -std=c23\
 		 -pedantic\
 		 -fsanitize=undefined\
 		 -fsanitize=address\
-		 -Ofast
+		 -O2
 
 .PHONY: basic
-basic:
-	$(LD) $(CFLAGS) -o basic basic.c -lm
+basic: basic.c factor64.o
+	$(LD) $(CFLAGS) -o basic basic.c factor64.o -lm
 
 .PHONY: tonellishanks
 tonellishanks:

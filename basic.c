@@ -73,16 +73,11 @@ int basic(int64_t z, int64_t k) {
 	if (kmcbzpz == 1) {
 		return check_d(&x, &y, z-1, 1, k);
 	}
-	initfactor64("factor.bin");
 	_k = factor64(p, e, kmcbzpz);
-	//sort_factors(_k, p, e);
-	//printf("%d, %ld\n", _k, kmcbzpz);
 	for (int64_t i = 0; i < 0b1<<_k; ++i) {
 		d = 1;
 		for (uint8_t j = 0; j < _k; ++j)
 			d *= ((0b1<<j) & i) ? p[j] : 1;
-		if (d == 0)
-			continue;
 		if (!check_d(&x, &y, z-1, d, k))
 			continue;
 		//printf("(%ld)C3 + (%ld)C3 + (%ld)C3 = %ld\n", x+1, y+1, z, k);

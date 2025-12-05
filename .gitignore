@@ -61,3 +61,6 @@ montgomery
 barret
 muller
 mod
+factor.bin
+factor64.o
+hard.txt

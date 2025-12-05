@@ -80,7 +80,7 @@ int basic(int64_t z, int64_t k) {
 			d *= ((0b1<<j) & i) ? p[j] : 1;
 		if (!check_d(&x, &y, z-1, d, k))
 			continue;
-		//printf("(%ld)C3 + (%ld)C3 + (%ld)C3 = %ld\n", x+1, y+1, z, k);
+		printf("(%ld)C3 + (%ld)C3 + (%ld)C3 = %ld\n", x+1, y+1, z, k);
 		return 1;
 	}
 	return 0;
@@ -88,8 +88,9 @@ int basic(int64_t z, int64_t k) {
 
 uint8_t zloop(int64_t k) {
 	if (basic(0, k))
-		return 1;
-	for (int64_t z = 1; z <= sqrt(6*k); ++z) {
+		return 1; 
+	for (int64_t z = 1; z <= 1000000; ++z) {
+		//printf("%ld, %ld\n", k, z);
 		if (basic(z, k))
 			return 1;
 		if (basic(-z, k))

@@ -3,12 +3,9 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#define TRUE 1
-
-
-//verbatim from factor64
+// functions from factor64
 int initfactor64(const char*);
-int factor64(uint64_t*, int*, uint64_t*);
+int factor64(uint64_t*, int*, uint64_t);
 int isprime64(uint64_t);
 
 uint64_t _abs(int64_t x) {
@@ -71,13 +68,19 @@ int basic(int64_t z, int64_t k) {
 	uint64_t kmcbzpz = _abs(k - cb(z) + z), d = 1, p[15];
 	int64_t x, y;
 	int _k, e[15];
-	_k = factor64(p, e, &kmcbzpz);
-
-	for (int64_t i = 0; i <= (0b1<<_k) - 1; ++i) {
+	if (kmcbzpz == 0)
+		return 1;
+	if (kmcbzpz == 1) {
+		return check_d(&x, &y, z-1, 1, k);
+	}
+	initfactor64("factor.bin");
+	_k = factor64(p, e, kmcbzpz);
+	//sort_factors(_k, p, e);
+	//printf("%d, %ld\n", _k, kmcbzpz);
+	for (int64_t i = 0; i < 0b1<<_k; ++i) {
 		d = 1;
-		for (uint8_t j = 0b1; j <= _k - 1; j++) {
-			d *= ((0b1<<j) & i) ? e[j] : 1;
-		}
+		for (uint8_t j = 0; j < _k; ++j)
+			d *= ((0b1<<j) & i) ? p[j] : 1;
 		if (d == 0)
 			continue;
 		if (!check_d(&x, &y, z-1, d, k))
@@ -100,19 +103,10 @@ uint8_t zloop(int64_t k) {
 	return 0;
 }
 
-void kloop(int64_t kLIM) {
-	const uint16_t cLIM = 40;
-	uint16_t c = 0;
-	for (int64_t k = 1; k <= kLIM; ++k) {
-		if (!zloop(k)) {
-			printf("%ld,", k);
-			if (++c == cLIM) {
-				putchar('\n');
-				c = 0;
-			}
-		}
-	}
-	putchar('\n');
+void kloop(int64_t kLIM, FILE* f) {
+	for (int64_t k = 1; k <= kLIM; ++k)
+		if (!zloop(k))
+			fprintf(f, "%ld\n", k);
 }
 
 int main(int argc, char** argv) {
@@ -123,6 +117,8 @@ int main(int argc, char** argv) {
 		return -1;
 	}
 	const int64_t k_LIM = atoi(argv[1]);
-	kloop(k_LIM);
+	FILE* f = fopen("hard.txt", "w");
+	kloop(k_LIM, f);
+	fclose(f);
 	return 0;
 }

@@ -8,11 +8,11 @@ int initfactor64(const char*);
 int factor64(uint64_t*, int*, uint64_t);
 int isprime64(uint64_t);
 
-uint64_t _abs(int64_t x) {
+static inline uint64_t _abs(int64_t x) {
 	return x >= 0 ? x : -x;
 }
 
-__int128_t cb(int64_t x){
+static inline __int128_t cb(int64_t x){
 	return (__int128_t)(x * (__int128_t)(x * x));
 }
 
@@ -44,64 +44,80 @@ uint8_t calcxy(int64_t* restrict x, int64_t* restrict y, uint64_t d, int64_t k, 
 	const int8_t SGN = sgn(6*k - cb(z) + z);
 	*x = SGN * (d + sqrt);
 	*y = SGN * (d - sqrt);
-	if (!((*x & 0b1) == 0b0 && (*y & 0b1) == 0b0))
-		return 0;
+	if ((*x & 0b1) == 0b1 || (*y & 0b1) == 0b1)
+	 	return 0;
 	*x >>= 1;
 	*y >>= 1;
 	return 1;
 }
 
-uint8_t checkxy(int64_t x, int64_t y, int64_t z, int64_t k) {
+static inline uint8_t checkxy(int64_t x, int64_t y, int64_t z, int64_t k) {
 	return (cb(x) - x + cb(y) - y + cb(z) - z == 6*k);
 }
 
-uint8_t check_d(int64_t* restrict x, int64_t* restrict y, int64_t _z, int d, int64_t k) {
-	if (!calcxy(x, y, d, k, _z))
+uint8_t check_d(int64_t* restrict x, int64_t* restrict y, int64_t z, int d, int64_t k) {
+	if (!calcxy(x, y, d, k, z))
 		return 0;
-	if (!checkxy(*x, *y, _z, k))
+	if (!checkxy(*x, *y, z, k))
 		return 0;
 	return 1;
 }
 
 
-int basic(int64_t z, int64_t k) {
-	uint64_t kmcbzpz = _abs(k - cb(z) + z), d = 1, p[15];
-	int64_t x, y;
-	int _k, e[15];
-	if (kmcbzpz == 0)
-		return 1;
-	if (kmcbzpz == 1) {
-		return check_d(&x, &y, z-1, 1, k);
+int basic(int64_t z, int64_t k, FILE* f) {
+	uint64_t _6kmcbzpz = _abs(6*k - cb(z) + z), d, p[15], j = 0;
+	int64_t x = 0, y = 0;
+	int l, e[15];
+	l = factor64(p, e, _6kmcbzpz);
+
+  uint64_t sum = 0;
+  for (int16_t i = 0; i < l; ++i)
+    sum += e[i];
+  int raw_factors[sum];
+
+  //create array with a prime power factor in each position
+  for (int64_t i = 0; i < l; ++i) {
+    while (--e[i] >= 0) {
+      raw_factors[j++] = p[i];
+    }
+  }
+
+	if (_6kmcbzpz == 0)
+		goto success;
+	if (_6kmcbzpz == 1) {
+		if (!check_d(&x, &y, z-1, 1, k))
+      return 0;
+    goto success;
 	}
-	_k = factor64(p, e, kmcbzpz);
-	for (int64_t i = 0; i < 0b1<<_k; ++i) {
+
+	for (int64_t i = 0; i < 0b1<<sum; ++i) {
 		d = 1;
-		for (uint8_t j = 0; j < _k; ++j)
-			d *= ((0b1<<j) & i) ? p[j] : 1;
+		for (uint64_t j = 0; j < sum; ++j)
+      if ((0b1<<j) & i)
+			  d *= raw_factors[j];
 		if (!check_d(&x, &y, z-1, d, k))
 			continue;
-		printf("(%ld)C3 + (%ld)C3 + (%ld)C3 = %ld\n", x+1, y+1, z, k);
+		success: fprintf(f, "%ld: %ld %ld %ld\n", k, x+1, y+1, z);
 		return 1;
 	}
 	return 0;
 }
 
-uint8_t zloop(int64_t k) {
-	if (basic(0, k))
+uint8_t zloop(int64_t k, FILE* f) {
+	if (basic(0, k, f))
 		return 1; 
-	for (int64_t z = 1; z <= 1000000; ++z) {
-		//printf("%ld, %ld\n", k, z);
-		if (basic(z, k))
+	for (int64_t z = 1; z <= 5000000; ++z) {
+		if (basic(z, k, f))
 			return 1;
-		if (basic(-z, k))
+		if (basic(-z, k, f))
 			return 1;
 	}
 	return 0;
 }
 
-void kloop(int64_t kLIM, FILE* f) {
+void kloop(int64_t kLIM, FILE* f, FILE* e) {
 	for (int64_t k = 1; k <= kLIM; ++k)
-		if (!zloop(k))
+		if (!zloop(k, e))
 			fprintf(f, "%ld\n", k);
 }
 
@@ -114,7 +130,9 @@ int main(int argc, char** argv) {
 	}
 	const int64_t k_LIM = atoi(argv[1]);
 	FILE* f = fopen("hard.txt", "w");
-	kloop(k_LIM, f);
+	FILE* e = fopen("rep.txt", "w");
+	kloop(k_LIM, f, e);
 	fclose(f);
+	fclose(e);
 	return 0;
 }

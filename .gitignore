@@ -63,4 +63,5 @@ muller
 mod
 factor.bin
 factor64.o
-hard.txt
+hards/
+reps/

@@ -131,8 +131,8 @@ int main(int argc, char** argv) {
 	char hardname[100];
 	char repname[100];
 	const int64_t kMIN = atoi(argv[1]), kMAX = atoi(argv[2]);
-	snprintf(hardname, 100, "hard%ld.txt", kMAX);
-	snprintf(repname, 100, "rep%ld.txt", kMAX);
+	snprintf(hardname, 100, "hards/hard%ld.txt", kMAX);
+	snprintf(repname, 100, "reps/rep%ld.txt", kMAX);
 	FILE* f = fopen(hardname, "w");
 	FILE* e = fopen(repname, "w");
 	kloop(kMIN, kMAX, f, e);

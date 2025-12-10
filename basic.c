@@ -64,19 +64,19 @@ uint8_t check_d(int64_t* restrict x, int64_t* restrict y, int64_t z, int d, int6
 }
 
 
-int basic(int64_t z, int64_t k, FILE* f) {
-	uint64_t _6kmcbzpz = _abs(6*k - cb(z) + z), d, p[15], j = 0;
+int basic(int64_t z, int64_t k/*, FILE* f*/) {
+	uint64_t _6kmcbzpz = _abs(6*k - cb(z) + z), d, p[15], j = 0, l;
 	int64_t x = 0, y = 0;
-	int l, e[15];
-	l = factor64(p, e, _6kmcbzpz);
+	int e[15];
+	l = (uint64_t)factor64(p, e, _6kmcbzpz);
 
   uint64_t sum = 0;
-  for (int16_t i = 0; i < l; ++i)
+  for (uint64_t i = 0; i < l; ++i)
     sum += e[i];
   int raw_factors[sum];
 
   //create array with a prime power factor in each position
-  for (int64_t i = 0; i < l; ++i) {
+  for (uint64_t i = 0; i < l; ++i) {
     while (--e[i] >= 0) {
       raw_factors[j++] = p[i];
     }
@@ -90,34 +90,34 @@ int basic(int64_t z, int64_t k, FILE* f) {
     goto success;
 	}
 
-	for (int64_t i = 0; i < 0b1<<sum; ++i) {
+	for (uint64_t i = 0; i < (uint64_t)0b1<<sum; ++i) {
 		d = 1;
 		for (uint64_t j = 0; j < sum; ++j)
       if ((0b1<<j) & i)
 			  d *= raw_factors[j];
 		if (!check_d(&x, &y, z-1, d, k))
 			continue;
-		success: fprintf(f, "%ld: %ld %ld %ld\n", k, x+1, y+1, z);
+		success: //fprintf(f, "%ld: %ld %ld %ld\n", k, x+1, y+1, z);
 		return 1;
 	}
 	return 0;
 }
 
-uint8_t zloop(int64_t k, FILE* f) {
-	if (basic(0, k, f))
+uint8_t zloop(int64_t k/*, FILE* f*/) {
+	if (basic(0, k/*, f*/))
 		return 1; 
-	for (int64_t z = 1; z <= 100000; ++z) {
-		if (basic(z, k, f))
+	for (int64_t z = 1; z <= sqrt(6*k); ++z) {
+		if (basic(z, k/*, f*/))
 			return 1;
-		if (basic(-z, k, f))
+		if (basic(-z, k/*, f*/))
 			return 1;
 	}
 	return 0;
 }
 
-void kloop(int64_t kMIN, int64_t kMAX, FILE* f, FILE* e) {
+void kloop(int64_t kMIN, int64_t kMAX, FILE* f/*, FILE* e*/) {
 	for (int64_t k = kMIN; k <= kMAX; ++k)
-		if (!zloop(k, e))
+		if (!zloop(k/*, e*/))
 			fprintf(f, "%ld\n", k);
 }
 
@@ -134,9 +134,9 @@ int main(int argc, char** argv) {
 	snprintf(hardname, 100, "hards/hard%ld.txt", kMAX);
 	snprintf(repname, 100, "reps/rep%ld.txt", kMAX);
 	FILE* f = fopen(hardname, "w");
-	FILE* e = fopen(repname, "w");
-	kloop(kMIN, kMAX, f, e);
+	//FILE* e = fopen(repname, "w");
+	kloop(kMIN, kMAX, f/*, e*/);
 	fclose(f);
-	fclose(e);
+	//fclose(e);
 	return 0;
 }

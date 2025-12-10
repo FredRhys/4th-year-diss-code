@@ -106,7 +106,7 @@ int basic(int64_t z, int64_t k, FILE* f) {
 uint8_t zloop(int64_t k, FILE* f) {
 	if (basic(0, k, f))
 		return 1; 
-	for (int64_t z = 1; z <= 5000000; ++z) {
+	for (int64_t z = 1; z <= 100000; ++z) {
 		if (basic(z, k, f))
 			return 1;
 		if (basic(-z, k, f))
@@ -115,23 +115,27 @@ uint8_t zloop(int64_t k, FILE* f) {
 	return 0;
 }
 
-void kloop(int64_t kLIM, FILE* f, FILE* e) {
-	for (int64_t k = 1; k <= kLIM; ++k)
+void kloop(int64_t kMIN, int64_t kMAX, FILE* f, FILE* e) {
+	for (int64_t k = kMIN; k <= kMAX; ++k)
 		if (!zloop(k, e))
 			fprintf(f, "%ld\n", k);
 }
 
 int main(int argc, char** argv) {
-	if (argc != 2)
+	if (argc != 3)
 		return -1;
 	if (initfactor64("factor.bin") < 0) {
 		fprintf(stderr, "Cannot read factor data\n");
 		return -1;
 	}
-	const int64_t k_LIM = atoi(argv[1]);
-	FILE* f = fopen("hard.txt", "w");
-	FILE* e = fopen("rep.txt", "w");
-	kloop(k_LIM, f, e);
+	char hardname[100];
+	char repname[100];
+	const int64_t kMIN = atoi(argv[1]), kMAX = atoi(argv[2]);
+	snprintf(hardname, 100, "hard%ld.txt", kMAX);
+	snprintf(repname, 100, "rep%ld.txt", kMAX);
+	FILE* f = fopen(hardname, "w");
+	FILE* e = fopen(repname, "w");
+	kloop(kMIN, kMAX, f, e);
 	fclose(f);
 	fclose(e);
 	return 0;

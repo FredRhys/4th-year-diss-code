@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#define ALPHA 1
+
 // functions from factor64
 int initfactor64(const char*);
 int factor64(uint64_t*, int*, uint64_t);
@@ -69,12 +71,13 @@ uint8_t check_d(int64_t* restrict x, int64_t* restrict y, int64_t z, int d, int6
 }
 
 static inline uint64_t get_divbound(int64_t z, int64_t k) {
-  switch (z) {
-    case 0:
-      return 3*k; // if y is nonzero
-    default:
-      return sqrtl(6*k);
-  }
+  if (z == 0)
+     return 3*k;
+  else if (z >= sqrtl(6*k))
+      return ALPHA * z;
+  else
+		return 6*k;
+
 }
 
 intentry* get_divisors(int64_t z, uint64_t x, int64_t k) {
@@ -109,7 +112,7 @@ intentry* get_divisors(int64_t z, uint64_t x, int64_t k) {
 					next->next = NULL;
 					cur->next = next;
 				}
-				cont: continue;
+				cont:;
 			}
 		}
 

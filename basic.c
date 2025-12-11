@@ -29,11 +29,11 @@ int64_t calcdisc(uint64_t d, int64_t k, int64_t z) {
 	return 4 * (d + _abs(6*k - cb(z) + z)) - cb(d);
 }
 
-uint8_t calcsqrt(uint64_t* restrict _sqrt, uint64_t d, int64_t k, int32_t z) {
+uint8_t calcsqrt(uint64_t* restrict _sqrt, uint64_t d, int64_t k, int64_t z) {
 	int64_t disc = calcdisc(d, k, z);
 	if (disc < 0)
 		return 0;
-	*_sqrt = sqrt(disc / (3 * d));
+	*_sqrt = sqrtl(disc / (3 * d));
 	return 1;
 }
 

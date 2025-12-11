@@ -63,7 +63,6 @@ uint8_t check_d(int64_t* restrict x, int64_t* restrict y, int64_t z, int d, int6
 	return 1;
 }
 
-
 int basic(int64_t z, int64_t k/*, FILE* f*/) {
 	uint64_t _6kmcbzpz = _abs(6*k - cb(z) + z), d, p[15], j = 0, l;
 	int64_t x = 0, y = 0;

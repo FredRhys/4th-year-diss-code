@@ -23,8 +23,8 @@ static inline uint64_t sq(uint32_t x) {
 	return (int64_t)x * x;
 }
 
-static inline __int128_t cb(int64_t x){
-	return (__int128_t)x * x * x;
+static inline int64_t cb(int32_t x){
+	return (int64_t)x * x * x;
 }
 
 int8_t sgn(int64_t x) {
@@ -36,11 +36,11 @@ int8_t sgn(int64_t x) {
 		return -1;
 }
 
-int64_t calcdisc(uint64_t d, int64_t k, int64_t z) {
+int64_t calcdisc(uint64_t d, int64_t k, int32_t z) {
 	return 4 * (d + _abs(6*k - cb(z) + z)) - cb(d);
 }
 
-uint8_t calcsqrt(uint64_t* restrict _sqrt, uint64_t d, int64_t k, int64_t z) {
+uint8_t calcsqrt(uint64_t* restrict _sqrt, uint64_t d, int64_t k, int32_t z) {
 	int64_t disc = calcdisc(d, k, z);
 	const uint64_t _3d = 3 * d;
 	uint32_t sqrt;
@@ -57,7 +57,7 @@ uint8_t calcsqrt(uint64_t* restrict _sqrt, uint64_t d, int64_t k, int64_t z) {
 	return 0;
 }
 
-uint8_t calcxy(int64_t* restrict x, int64_t* restrict y, uint64_t d, int64_t k, int64_t z) {
+uint8_t calcxy(int64_t* restrict x, int64_t* restrict y, uint64_t d, int64_t k, int32_t z) {
 	uint64_t sqrt;
 	if (!calcsqrt(&sqrt, d, k, z))
 		return 0;
@@ -75,7 +75,7 @@ uint8_t calcxy(int64_t* restrict x, int64_t* restrict y, uint64_t d, int64_t k, 
 //  	return (cb(x) - x + cb(y) - y + cb(z) - z == 6*k);
 // }
 
-uint8_t check_d(int64_t* restrict x, int64_t* restrict y, int64_t z, int d, int64_t k) {
+uint8_t check_d(int64_t* restrict x, int64_t* restrict y, int32_t z, int d, int64_t k) {
 	if (!calcxy(x, y, d, k, z))
 		return 0;
 	// if (!checkxy(*x, *y, z, k))
@@ -83,7 +83,7 @@ uint8_t check_d(int64_t* restrict x, int64_t* restrict y, int64_t z, int d, int6
 	return 1;
 }
 
-static inline uint64_t get_divbound(int64_t z, int64_t k) {
+static inline uint64_t get_divbound(int32_t z, int64_t k) {
   if (z == 0)
      return 3*k;
   else if (z >= sqrtl(6*k))
@@ -93,7 +93,7 @@ static inline uint64_t get_divbound(int64_t z, int64_t k) {
 
 }
 
-intentry* get_divisors(int64_t z, uint64_t x, int64_t k) {
+intentry* get_divisors(int32_t z, uint64_t x, int64_t k) {
 	int l, e[15];
   uint64_t p[15], nextint;
 	const uint64_t DIVBOUND = get_divbound(z, k);
@@ -132,7 +132,7 @@ intentry* get_divisors(int64_t z, uint64_t x, int64_t k) {
 	end: return first;
 }
 
-int basic(int64_t z, int64_t k/*, FILE* f*/) {
+int basic(int32_t z, int64_t k/*, FILE* f*/) {
 	uint64_t _6kmcbzpz = _abs(6*k - cb(z) + z);
 	int64_t x = 0, y = 0;
 	uint8_t r = 0;
@@ -157,11 +157,10 @@ int basic(int64_t z, int64_t k/*, FILE* f*/) {
 	return r;
 }
 
-uint8_t zloop(int64_t k/*, FILE* f*/) {
+uint8_t zloop(int64_t k, int32_t zLIM/*, FILE* f*/) {
 	if (basic(0, k/*, f*/))
 		return 1;
-	const int zLIM = (int64_t)(sqrtl(6*k));
-	for (int64_t z = 1; z <= zLIM; ++z) {
+	for (int32_t z = 1; z <= zLIM; ++z) {
 		if (basic(z, k/*, f*/))
 			return 1;
 		if (basic(-z, k/*, f*/))
@@ -170,14 +169,14 @@ uint8_t zloop(int64_t k/*, FILE* f*/) {
 	return 0;
 }
 
-void kloop(int64_t kMIN, int64_t kMAX, FILE* f/*, FILE* e*/) {
+void kloop(int64_t kMIN, int64_t kMAX, int32_t zLIM, FILE* f/*, FILE* e*/) {
 	for (int64_t k = kMIN; k <= kMAX; ++k)
-		if (!zloop(k/*, e*/))
+		if (!zloop(k, zLIM/*, e*/))
 			fprintf(f, "%ld\n", k);
 }
 
 int main(int argc, char** argv) {
-	if (argc != 3)
+	if (argc != 4)
 		return -1;
 	if (initfactor64("factor.bin") < 0) {
 		fprintf(stderr, "Cannot read factor data\n");
@@ -186,11 +185,12 @@ int main(int argc, char** argv) {
 	char hardname[100];
 	//char repname[100];
 	const int64_t kMIN = atoi(argv[1]), kMAX = atoi(argv[2]);
+	const int32_t zLIM = atoi(argv[3]);
 	snprintf(hardname, 100, "hards/hard%ld.txt", kMAX);
 	//snprintf(repname, 100, "reps/rep%ld.txt", kMAX);
 	FILE* f = fopen(hardname, "w");
 	//FILE* e = fopen(repname, "w");
-	kloop(kMIN, kMAX, f/*, e*/);
+	kloop(kMIN, kMAX, zLIM, f/*, e*/);
 	fclose(f);
 	//fclose(e);
 	return 0;

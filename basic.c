@@ -9,7 +9,7 @@ int factor64(uint64_t*, int*, uint64_t);
 int isprime64(uint64_t);
 
 typedef struct intentry{
-	int64_t x;
+	uint64_t x;
 	struct intentry* next;
 }intentry;
 
@@ -56,53 +56,90 @@ uint8_t calcxy(int64_t* restrict x, int64_t* restrict y, uint64_t d, int64_t k, 
 	return 1;
 }
 
-// static inline uint8_t checkxy(int64_t x, int64_t y, int64_t z, int64_t k) {
-// 	return (cb(x) - x + cb(y) - y + cb(z) - z == 6*k);
-// }
+static inline uint8_t checkxy(int64_t x, int64_t y, int64_t z, int64_t k) {
+ 	return (cb(x) - x + cb(y) - y + cb(z) - z == 6*k);
+}
 
 uint8_t check_d(int64_t* restrict x, int64_t* restrict y, int64_t z, int d, int64_t k) {
 	if (!calcxy(x, y, d, k, z))
 		return 0;
-	// if (!checkxy(*x, *y, z, k))
-	// 	return 0;
+	if (!checkxy(*x, *y, z, k))
+	 	return 0;
 	return 1;
 }
 
-static inline int64_t get_divbound(int64_t z, int64_t k) {
+static inline uint64_t get_divbound(int64_t z, int64_t k) {
   switch (z) {
     case 0:
-      return k;
-      break;
+      return 3*k; // if y is nonzero
     default:
-      return 0;
+      return sqrtl(6*k);
   }
 }
 
-intentry* get_divisors(int64_t z, uint64_t x, int64_t y) {
-  intentry* head = NULL;
-  int k, e[15];
-  uint64_t n, p[15];
-  k = factor64(p, e, n);
+intentry* get_divisors(int64_t z, uint64_t x, int64_t k) {
+	int l, e[15];
+  uint64_t p[15], nextint;
+	const uint64_t DIVBOUND = get_divbound(z, k);
+
+  intentry* first = malloc(sizeof(intentry)), * cur, * start, * next, * initnext;
+	first->x = 1;
+	first->next = NULL;
+	if (x==1)
+		return first;
+  l = factor64(p, e, x);
+	for (int i = 0; i < l; ++i)
+		while (--e[i] >= 0) {
+			start = first;
+			while (start != NULL) {
+				initnext = start->next;
+				nextint = p[i] * start->x;
+				if (nextint > DIVBOUND)
+					goto end;
+				cur = start;
+				while(cur->next != NULL) {
+					if (cur->x == nextint)
+						goto cont;
+					cur = cur->next;
+				}
+				// this only runs if cur is the last item in the linked list
+				if (cur->x != nextint) {
+					next = malloc(sizeof(intentry));
+					next->x = nextint;
+					next->next = NULL;
+					cur->next = next;
+				}
+				cont: start = initnext;
+			}
+		}
+
+	end: cur = first;
+	return first;
 }
 
 int basic(int64_t z, int64_t k/*, FILE* f*/) {
-	uint64_t _6kmcbzpz = _abs(6*k - cb(z) + z), d, p[15], j = 0, l;
+	uint64_t _6kmcbzpz = _abs(6*k - cb(z) + z);
 	int64_t x = 0, y = 0;
-	int e[15];
-	l = (uint64_t)factor64(p, e, _6kmcbzpz);
-
-  intentry* head = get_divisors(z, _6kmcbzpz);
+	uint8_t r = 0;
 
 	if (_6kmcbzpz == 0)
-		goto success;
-	if (_6kmcbzpz == 1) {
+		return 1;
+	else if (_6kmcbzpz == 1) {
 		if (!check_d(&x, &y, z-1, 1, k))
-      goto failure;
-    goto success;
+      return 0;
+   return 1;
 	}
-
-	success: return 1;
-	failure: return 0;
+	intentry* head = get_divisors(z, _6kmcbzpz, k), * temp;
+	while (head != NULL) {
+		if (check_d(&x, &y, z-1, head->x, k) && !r) {
+			r = 1;
+			//printf("%ld %ld %ld %ld\n", x+1, y+1, z, k);
+		}
+		temp = head->next;
+		free(head);
+		head = temp;
+	}
+	return r;
 }
 
 uint8_t zloop(int64_t k/*, FILE* f*/) {

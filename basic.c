@@ -82,7 +82,7 @@ intentry* get_divisors(int64_t z, uint64_t x, int64_t k) {
   uint64_t p[15], nextint;
 	const uint64_t DIVBOUND = get_divbound(z, k);
 
-  intentry* first = malloc(sizeof(intentry)), * cur, * start, * next, * initnext;
+  intentry* first = malloc(sizeof(intentry)), * cur, * start, * next;
 	first->x = 1;
 	first->next = NULL;
 	if (x==1)
@@ -92,11 +92,11 @@ intentry* get_divisors(int64_t z, uint64_t x, int64_t k) {
 		while (--e[i] >= 0) {
 			start = first;
 			while (start != NULL) {
-				initnext = start->next;
 				nextint = p[i] * start->x;
 				if (nextint > DIVBOUND)
 					goto end;
 				cur = start;
+				start = start->next;
 				while(cur->next != NULL) {
 					if (cur->x == nextint)
 						goto cont;
@@ -109,12 +109,11 @@ intentry* get_divisors(int64_t z, uint64_t x, int64_t k) {
 					next->next = NULL;
 					cur->next = next;
 				}
-				cont: start = initnext;
+				cont: continue;
 			}
 		}
 
-	end: cur = first;
-	return first;
+	end: return first;
 }
 
 int basic(int64_t z, int64_t k/*, FILE* f*/) {

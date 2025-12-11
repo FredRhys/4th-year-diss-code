@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#define ALPHA 1
+#define ALPHA 0.259921049895
 
 // functions from factor64
 int initfactor64(const char*);
@@ -17,6 +17,10 @@ typedef struct intentry{
 
 static inline uint64_t _abs(int64_t x) {
 	return x >= 0 ? x : -x;
+}
+
+static inline uint64_t sq(uint32_t x) {
+	return (int64_t)x * x;
 }
 
 static inline __int128_t cb(int64_t x){
@@ -38,10 +42,19 @@ int64_t calcdisc(uint64_t d, int64_t k, int64_t z) {
 
 uint8_t calcsqrt(uint64_t* restrict _sqrt, uint64_t d, int64_t k, int64_t z) {
 	int64_t disc = calcdisc(d, k, z);
+	const uint64_t _3d = 3 * d;
+	uint32_t sqrt;
 	if (disc < 0)
 		return 0;
-	*_sqrt = sqrtl(disc / (3 * d));
-	return 1;
+	if (disc % _3d != 0)
+		return 0;
+	const uint64_t sqrtand = disc/_3d;
+	sqrt = sqrtl(sqrtand);
+	if (sq(sqrt) == sqrtand) {
+		*_sqrt = sqrt;
+		return 1;
+	}
+	return 0;
 }
 
 uint8_t calcxy(int64_t* restrict x, int64_t* restrict y, uint64_t d, int64_t k, int64_t z) {
@@ -58,15 +71,15 @@ uint8_t calcxy(int64_t* restrict x, int64_t* restrict y, uint64_t d, int64_t k, 
 	return 1;
 }
 
-static inline uint8_t checkxy(int64_t x, int64_t y, int64_t z, int64_t k) {
- 	return (cb(x) - x + cb(y) - y + cb(z) - z == 6*k);
-}
+// static inline uint8_t checkxy(int64_t x, int64_t y, int64_t z, int64_t k) {
+//  	return (cb(x) - x + cb(y) - y + cb(z) - z == 6*k);
+// }
 
 uint8_t check_d(int64_t* restrict x, int64_t* restrict y, int64_t z, int d, int64_t k) {
 	if (!calcxy(x, y, d, k, z))
 		return 0;
-	if (!checkxy(*x, *y, z, k))
-	 	return 0;
+	// if (!checkxy(*x, *y, z, k))
+	//  	return 0;
 	return 1;
 }
 
@@ -74,7 +87,7 @@ static inline uint64_t get_divbound(int64_t z, int64_t k) {
   if (z == 0)
      return 3*k;
   else if (z >= sqrtl(6*k))
-      return ALPHA * z;
+      return ALPHA * z + 1;
   else
 		return 6*k;
 
@@ -135,7 +148,7 @@ int basic(int64_t z, int64_t k/*, FILE* f*/) {
 	while (head != NULL) {
 		if (check_d(&x, &y, z-1, head->x, k) && !r) {
 			r = 1;
-			//printf("%ld %ld %ld %ld\n", x+1, y+1, z, k);
+			//printf("%ld = %ldC3 %ldC3 %ldC3\n", k, x+1, y+1, z);
 		}
 		temp = head->next;
 		free(head);

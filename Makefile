@@ -8,7 +8,7 @@ CFLAGS = -std=c23\
 		 -pedantic\
 		 -fsanitize=undefined\
 		 -fsanitize=address\
-		 -O2\
+		 -Ofast\
 		 -march=native
 
 .PHONY: basic

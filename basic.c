@@ -99,12 +99,11 @@ intentry* get_divisors(int32_t z, uint64_t x, int64_t k) {
 			start = first;
 			while (start != NULL) {
 				nextint = p[i] * start->x;
-				if (nextint >= DIVBOUND) {
-					start = start->next;
-					goto cont;
-				}
 				cur = start;
 				start = start->next;
+				if (nextint >= DIVBOUND) {
+					goto cont;
+				}
 				while(cur->next != NULL) {
 					if (cur->x == nextint)
 						goto cont;

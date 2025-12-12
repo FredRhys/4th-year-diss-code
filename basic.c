@@ -4,6 +4,9 @@
 #include <stdint.h>
 
 #define ALPHA 0.259921049895
+//need to find underlying issue
+#define LIM21_t 2000000
+#define CBLIM21_t 8000000000000000000
 
 // functions from factor64
 int initfactor64(const char*);
@@ -15,16 +18,17 @@ typedef struct intentry{
 	struct intentry* next;
 }intentry;
 
-static inline int64_t _abs(int64_t x) {
-	return x >= 0 ? x : -x;
+static inline uint64_t absl(int64_t x) {
+	return x>=0 ? x : -x;
 }
 
 static inline uint64_t sq(uint32_t x) {
 	return (int64_t)x * x;
 }
 
+// need to find underlying issue
 static inline int64_t cb(int32_t x){
-	return (int64_t)x * x * x;
+	return x > LIM21_t ? (int64_t)CBLIM21_t : (int64_t)x * x * x;
 }
 
 int8_t sgn(int64_t x) {
@@ -37,7 +41,7 @@ int8_t sgn(int64_t x) {
 }
 
 int64_t calcdisc(uint64_t d, int64_t k, int32_t z) {
-	return 4 * (d + _abs(6*k - cb(z) + z)) - cb(d);
+	return 4 * (d + absl(6*k - cb(z) + z)) - cb(d);
 }
 
 uint8_t calcsqrt(uint64_t* restrict _sqrt, uint64_t d, int64_t k, int32_t z) {
@@ -74,11 +78,11 @@ uint8_t calcxy(int64_t* restrict x, int64_t* restrict y, uint64_t d, int64_t k, 
 static inline uint64_t get_divbound(int32_t z, int64_t k) {
   if (z == 0)
      return 3*k;
-  else if (_abs(z) >= sqrtl(6*k)) {
-    return ALPHA * _abs(z);
+  else if (abs(z) >= sqrtl(6*k)) {
+    return (abs(z) >> 2) + 1;
 	}
   else
-		return 3*k;
+		return 3*k>LIM21_t ? LIM21_t : 3*k;
 
 }
 
@@ -124,8 +128,12 @@ intentry* get_divisors(int32_t z, uint64_t x, int64_t k) {
 	return first;
 }
 
-int basic(int32_t z, int64_t k, FILE* f) {
-	uint64_t _6kmcbzpz = _abs(6*k - cb(z) + z);
+static inline int64_t canonicize(int64_t x) {
+	return x == 0 || x == 1 || x == 2 ? 0 : x;
+}
+
+int basic(int32_t z, int64_t k/*, FILE* f*/) {
+	uint64_t _6kmcbzpz = absl(6*k - cb(z) + z);
 	int64_t x = 0, y = 0;
 	uint8_t r = 0;
 
@@ -134,7 +142,7 @@ int basic(int32_t z, int64_t k, FILE* f) {
 	intentry* head = get_divisors(z, _6kmcbzpz, k), * temp;
 	while (head != NULL) {
 		if (calcxy(&x, &y, head->x, k, z) && !r) {
-			fprintf(f, "%ld = %ldC3 + %ldC3 + %dC3\n", k, x+1, y+1, z+1);
+			//fprintf(f, "%ld = %ldC3 + %ldC3 + %ldC3\n", k, canonicize(x+1), canonicize(y+1), canonicize(z+1));
 		 	r = 1;
 		}
 		temp = head->next;
@@ -144,21 +152,21 @@ int basic(int32_t z, int64_t k, FILE* f) {
 	return r;
 }
 
-uint8_t zloop(int64_t k, int32_t zLIM, FILE* f) {
-	if (basic(0, k, f))
+uint8_t zloop(int64_t k, int32_t zLIM/*, FILE* f*/) {
+	if (basic(0, k/*, f*/))
 		return 1;
 	for (int32_t z = 1; z <= zLIM; ++z) {
-		if (basic(z, k, f))
+		if (basic(z, k/*, f*/))
 			return 1;
-		if (basic(-z, k, f))
+		if (basic(-z, k/*, f*/))
 			return 1;
 	}
 	return 0;
 }
 
-void kloop(int64_t kMIN, int64_t kMAX, int32_t zLIM, FILE* f, FILE* e) {
+void kloop(int64_t kMIN, int64_t kMAX, int32_t zLIM, FILE* f/*, FILE* e*/) {
 	for (int64_t k = kMIN; k <= kMAX; ++k)
-		if (!zloop(k, zLIM, e))
+		if (!zloop(k, zLIM/*, e*/))
 			fprintf(f, "%ld\n", k);
 }
 
@@ -170,15 +178,15 @@ int main(int argc, char** argv) {
 		return -1;
 	}
 	char hardname[100];
-	char repname[100];
+	//char repname[100];
 	const int64_t kMIN = atoi(argv[1]), kMAX = atoi(argv[2]);
 	const int32_t zLIM = atoi(argv[3]);
 	snprintf(hardname, 100, "hards/hard%ld.txt", kMAX);
-	snprintf(repname, 100, "reps/rep%ld.txt", kMAX);
+	//snprintf(repname, 100, "reps/rep%ld.txt", kMAX);
 	FILE* f = fopen(hardname, "w");
-	FILE* e = fopen(repname, "w");
-	kloop(kMIN, kMAX, zLIM, f, e);
+	//FILE* e = fopen(repname, "w");
+	kloop(kMIN, kMAX, zLIM, f/*, e*/);
 	fclose(f);
-	fclose(e);
+	//fclose(e);
 	return 0;
 }

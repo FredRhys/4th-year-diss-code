@@ -121,6 +121,14 @@ intentry* get_divisors(int32_t z, uint64_t x, int64_t k) {
 				cont:;
 			}
 		}
+
+	if (z == -62) {
+		cur = first;
+		while (cur != NULL) {
+			printf("%ld\n", cur->x);
+			cur = cur->next;
+		}
+	}
 	return first;
 }
 

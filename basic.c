@@ -98,6 +98,8 @@ intentry* get_divisors(int32_t z, uint64_t x, int64_t k) {
 		while (--e[i] >= 0) {
 			start = first;
 			while (start != NULL) {
+				if (p[i] == start->x && e[i] == 0)
+					break;
 				nextint = p[i] * start->x;
 				cur = start;
 				start = start->next;

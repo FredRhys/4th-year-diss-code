@@ -5,8 +5,8 @@
 
 #define ALPHA 0.259921049895
 //need to find underlying issue
-#define LIM21_t 2000000
-#define CBLIM21_t 8000000000000000000
+#define LIM21_t 2097151
+#define CBLIM21_t 9223358842721533951
 
 // functions from factor64
 int initfactor64(const char*);
@@ -181,6 +181,8 @@ int main(int argc, char** argv) {
 	//char repname[100];
 	const int64_t kMIN = atoi(argv[1]), kMAX = atoi(argv[2]);
 	const int32_t zLIM = atoi(argv[3]);
+	if (zLIM > LIM21_t)
+		return -1;
 	snprintf(hardname, 100, "hards/hard%ld.txt", kMAX);
 	//snprintf(repname, 100, "reps/rep%ld.txt", kMAX);
 	FILE* f = fopen(hardname, "w");

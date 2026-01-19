@@ -5,7 +5,7 @@
 
 #define ALPHA 0.259921049895
 //need to find underlying issue
-#define LIM21_t 2097151
+#define LIM21_t (int32_t)2097151
 #define CBLIM21_t 9223358842721533951
 
 // functions from factor64
@@ -13,24 +13,28 @@ int initfactor64(const char*);
 int factor64(uint64_t*, int*, uint64_t);
 int isprime64(uint64_t);
 
+// linked list structure used for storing divisors
 typedef struct intentry{
-	uint64_t x;
+	uint32_t x;
 	struct intentry* next;
 }intentry;
 
+// absolute function for long integers
 static inline uint64_t absl(int64_t x) {
 	return x>=0 ? x : -x;
 }
 
+// squaring function
 static inline uint64_t sq(uint32_t x) {
 	return (int64_t)x * x;
 }
 
-// need to find underlying issue
+// cubing function; input integers must fit into 21 bits.
 static inline int64_t cb(int32_t x){
-	return x > LIM21_t ? (int64_t)CBLIM21_t : (int64_t)x * x * x;
+	return (int64_t)x * x * x;
 }
 
+// returns sign of input integer
 int8_t sgn(int64_t x) {
 	if (x > 0)
 		return 1;
@@ -40,41 +44,48 @@ int8_t sgn(int64_t x) {
 		return -1;
 }
 
-int64_t calcdisc(uint64_t d, int64_t k, int32_t z) {
+// returns the discriminant of the quadratic that gives potential values for x and y
+int64_t calcdisc(uint32_t d, int64_t k, int32_t z) {
 	return 4 * (d + absl(6*k - cb(z) + z)) - cb(d);
 }
 
-uint8_t calcsqrt(uint64_t* restrict _sqrt, uint64_t d, int64_t k, int32_t z) {
+// calculates the square root required for calculating potential values for x and y
+// returns affirmative if no issues
+uint8_t calcsqrt(uint64_t* restrict _sqrt, uint32_t d, int64_t k, int32_t z) {
 	int64_t disc = calcdisc(d, k, z);
 	const uint64_t _3d = 3 * d;
 	uint32_t sqrt;
-	if (disc < 0)
+	if (disc < 0) // i.e. no real square root exists
 		return 0;
-	if (disc % _3d != 0)
+	if (disc % _3d != 0) // i.e. the discriminant is not divisible by 3d
 		return 0;
 	const uint64_t sqrtand = disc/_3d;
 	sqrt = sqrtl(sqrtand);
-	if (sq(sqrt) == sqrtand) {
+	if (sq(sqrt) == sqrtand) { // i.e., sqrtand is a square number
 		*_sqrt = sqrt;
 		return 1;
 	}
 	return 0;
 }
 
-uint8_t calcxy(int64_t* restrict x, int64_t* restrict y, uint64_t d, int64_t k, int32_t z) {
+// calculates values for x and y
+// returns affirmative if they are satisfactory
+uint8_t calcxy(int64_t* restrict x, int64_t* restrict y, uint32_t d, int64_t k, int32_t z) {
 	uint64_t sqrt;
-	if (!calcsqrt(&sqrt, d, k, z))
+	if (!calcsqrt(&sqrt, d, k, z)) // i.e., no satisfactory square root exists
 		return 0;
 	const int8_t SGN = sgn(6*k - cb(z) + z);
 	*x = SGN * (d + sqrt);
 	*y = SGN * (d - sqrt);
-	if ((*x & 0b1) == 0b1 || (*y & 0b1) == 0b1)
+	if ((*x & 0b1) == 0b1 || (*y & 0b1) == 0b1) // i.e., they're not both even
 	 	return 0;
 	*x >>= 1;
 	*y >>= 1;
 	return 1;
 }
 
+// need to improve bound
+// returns an upper bound on the divisors in k
 static inline uint64_t get_divbound(int32_t z, int64_t k) {
   if (z == 0)
      return 3*k;
@@ -82,56 +93,68 @@ static inline uint64_t get_divbound(int32_t z, int64_t k) {
     return (abs(z) >> 2) + 1;
 	}
   else
-		return 3*k>LIM21_t ? LIM21_t : 3*k;
+		return 3*k;
 
 }
 
-//getting some unwanted divisors
+// returns the first entry in a linked list of the divisors of k
+// potential optimisation: sort the list whilst inserting elements
+// i am scared to touch it
 intentry* get_divisors(int32_t z, uint64_t x, int64_t k) {
 	int l, e[15];
-  uint64_t p[15], nextint;
+  uint64_t p[15];
+	uint32_t nextint;
 	const uint64_t DIVBOUND = get_divbound(z, k);
 
+	// creates and initializes the first entry
   intentry* first = malloc(sizeof(intentry)), * cur, * start, * next;
 	first->x = 1;
 	first->next = NULL;
 	if (x==1)
 		return first;
+	// store the prime divisors in p, their multiplicity in e, and the number of unique prime divisors in l
   l = factor64(p, e, x);
+	// iterate through all unique prime divisors
 	for (int i = 0; i < l; ++i)
+		// iterate as per multiplicity of the divisor.
 		while (--e[i] >= 0) {
+			// this is equivalent to S <- S append S * d
 			start = first;
+			// iterates through each existing entry in the list
 			while (start != NULL) {
 				if (p[i] == start->x && e[i] == 0)
 					break;
-				nextint = p[i] * start->x;
-				cur = start;
-				start = start->next;
-				if (nextint >= DIVBOUND) {
+				nextint = p[i] * start->x; // set the next potential entry
+				cur = start; // set the current entry
+				start = start->next; // increment the start entry ready for the next iteration
+				if (nextint >= LIM21_t || nextint >= DIVBOUND) { // skip this iteration if the next potential entry is too large
 					goto cont;
 				}
-				while(cur->next != NULL) {
-					if (cur->x == nextint)
+				while(cur->next != NULL) { // check if the linked list contains the next potential entry already.
+					if (cur->x == nextint) // skip this start-iteration if the next potential entry is already present
 						goto cont;
 					cur = cur->next;
 				}
-				// this only runs if cur is the last item in the linked list
+				// append the next entry as it is small enough and not already present
 				if (cur->x != nextint) {
 					next = malloc(sizeof(intentry));
 					next->x = nextint;
 					next->next = NULL;
 					cur->next = next;
 				}
-				cont:;
+				cont:; // goto label to skip the iteration
 			}
 		}
 	return first;
 }
 
+// sets x to 0 if x=1,2 as these all give 0 in the tetrahedral number formula
 static inline int64_t canonicize(int64_t x) {
-	return x == 0 || x == 1 || x == 2 ? 0 : x;
+	return x == 1 || x == 2 ? 0 : x;
 }
 
+// the basic algorithm
+// returns affirmative if we have found a representation for k with z as the third term
 int basic(int32_t z, int64_t k/*, FILE* f*/) {
 	uint64_t _6kmcbzpz = absl(6*k - cb(z) + z);
 	int64_t x = 0, y = 0;
@@ -165,9 +188,10 @@ uint8_t zloop(int64_t k, int32_t zLIM/*, FILE* f*/) {
 }
 
 void kloop(int64_t kMIN, int64_t kMAX, int32_t zLIM, FILE* f/*, FILE* e*/) {
-	for (int64_t k = kMIN; k <= kMAX; ++k)
+	for (int64_t k = kMIN; k <= kMAX; ++k) {
 		if (!zloop(k, zLIM/*, e*/))
 			fprintf(f, "%ld\n", k);
+	}
 }
 
 int main(int argc, char** argv) {

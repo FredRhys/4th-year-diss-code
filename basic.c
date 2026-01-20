@@ -114,7 +114,7 @@ intentry* get_divisors(int32_t z, uint64_t x, int64_t k) {
 	const uint64_t DIVBOUND = get_divbound(z, k);
 
 	// creates and initializes the first entry
-  intentry* first = malloc(sizeof(intentry)), * cur, * start;
+  intentry* first = malloc(sizeof(intentry)), * cur_mul, * cur_iter;
 	first->x = 1;
 	first->next = NULL;
 	if (x==1)
@@ -126,10 +126,39 @@ intentry* get_divisors(int32_t z, uint64_t x, int64_t k) {
 		// iterate as per multiplicity of the divisor.
 		while (--e[i] >= 0) {
 			// this is equivalent to S <- S append S * d
-			start = first;
+      cur_mul = first;
+			while (cur_mul != NULL) {
+        cur_iter = cur_mul;
+				nextint = p[i] * cur_mul->x;
+				cur_mul = cur_mul->next;
+        if (nextint > DIVBOUND)
+          goto cont;
+        while (cur_iter->next != NULL) {
+          if (cur_iter->x == p[i] && e[i] < 0)
+            goto cont;
+          cur_iter = cur_iter->next;
+        }
+        if (cur_iter->x != nextint)
+          cur_iter->next = append_entry(nextint);
+        cont:;
+			}
+		}
+  cur_mul = first;
+  printf("%ld: ", x);
+  while (cur_mul!= NULL) {
+    printf("%d,", cur_mul->x);
+    cur_mul = cur_mul->next;
+  }
+  printf(" z=%d\n", z);
+	return first;
+}
+
+/*
+
+start = first;
 			// iterates through each existing entry in the list
 			while (start != NULL) {
-				if (p[i] == start->x && e[i] == 0)
+				if (p[i] == start->x && e[i] == 0) // issue here
 					break;
 				nextint = p[i] * start->x; // set the next potential entry
 				cur = start; // set the current entry
@@ -146,11 +175,7 @@ intentry* get_divisors(int32_t z, uint64_t x, int64_t k) {
 				if (cur->x != nextint) {
 					cur->next = append_entry(nextint);
 				}
-				cont:; // goto label to skip the iteration
-			}
-		}
-	return first;
-}
+				cont:; // goto label to skip the iteration*/
 
 // sets x to 0 if x=1,2 as these all give 0 in the tetrahedral number formula
 static inline int64_t canonicize(int64_t x) {

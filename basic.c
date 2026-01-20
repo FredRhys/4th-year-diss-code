@@ -93,7 +93,7 @@ static inline uint64_t get_divbound(int32_t z, int64_t k) {
     return ALPHA * z + 1;
 	}
   else
-		return 3*k;
+	return LIM21_t;
 
 }
 

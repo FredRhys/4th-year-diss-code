@@ -88,9 +88,9 @@ uint8_t calcxy(int64_t* restrict x, int64_t* restrict y, uint32_t d, int64_t k, 
 // returns an upper bound on the divisors in k
 static inline uint64_t get_divbound(int32_t z, int64_t k) {
   if (z == 0)
-     return 3*k;
+     return 0;
   else if (abs(z) >= sqrtl(6*k)) {
-    return ALPHA * z;
+    return ALPHA * z + 1;
 	}
   else
 		return 3*k;

@@ -97,6 +97,13 @@ static inline uint64_t get_divbound(int32_t z, int64_t k) {
 
 }
 
+intentry* append_entry(uint32_t x) {
+	intentry* next = malloc(sizeof(intentry));
+	next->x = x;
+	next->next = NULL;
+	return next;
+}
+
 // returns the first entry in a linked list of the divisors of k
 // potential optimisation: sort the list whilst inserting elements
 // i am scared to touch it
@@ -107,7 +114,7 @@ intentry* get_divisors(int32_t z, uint64_t x, int64_t k) {
 	const uint64_t DIVBOUND = get_divbound(z, k);
 
 	// creates and initializes the first entry
-  intentry* first = malloc(sizeof(intentry)), * cur, * start, * next;
+  intentry* first = malloc(sizeof(intentry)), * cur, * start;
 	first->x = 1;
 	first->next = NULL;
 	if (x==1)
@@ -137,10 +144,7 @@ intentry* get_divisors(int32_t z, uint64_t x, int64_t k) {
 				}
 				// append the next entry as it is small enough and not already present
 				if (cur->x != nextint) {
-					next = malloc(sizeof(intentry));
-					next->x = nextint;
-					next->next = NULL;
-					cur->next = next;
+					cur->next = append_entry(nextint);
 				}
 				cont:; // goto label to skip the iteration
 			}

@@ -85,7 +85,7 @@ uint8_t calcxy(int64_t* restrict x, int64_t* restrict y, uint32_t d, int64_t k, 
 }
 
 // need to improve bound
-// returns an upper bound on the divisors in k
+// returns an upper bound on the divisors of |k-(z^3-z)|
 static inline uint64_t get_divbound(int32_t z, int64_t k) {
   if (z == 0)
      return 0;

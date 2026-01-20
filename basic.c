@@ -90,7 +90,7 @@ static inline uint64_t get_divbound(int32_t z, int64_t k) {
   if (z == 0)
      return 3*k;
   else if (abs(z) >= sqrtl(6*k)) {
-    return (abs(z) >> 2) + 1;
+    return ALPHA * z;
 	}
   else
 		return 3*k;

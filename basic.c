@@ -88,7 +88,7 @@ uint8_t calcxy(int64_t* restrict x, int64_t* restrict y, uint32_t d, int64_t k, 
 // returns an upper bound on the divisors of |k-(z^3-z)|
 static inline uint64_t get_divbound(int32_t z, int64_t k) {
   if (z == 0)
-     return 0;
+     return k;
   else if (abs(z) >= sqrtl(6*k)) {
     return ALPHA * z + 1;
 	}
@@ -189,6 +189,11 @@ uint8_t zloop(int64_t k, int32_t zLIM/*, FILE* f*/) {
 
 void kloop(int64_t kMIN, int64_t kMAX, int32_t zLIM, FILE* f/*, FILE* e*/) {
 	for (int64_t k = kMIN; k <= kMAX; ++k) {
+		if (k == -2 || k == -1 || k == 0)
+			continue; // we have assumed k does not equal these for our analysis.
+			// -2 = (-1)C3 + (-1)C3
+			// -1 = (-1)C3
+			// 0 = 0
 		if (!zloop(k, zLIM/*, e*/))
 			fprintf(f, "%ld\n", k);
 	}

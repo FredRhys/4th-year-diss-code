@@ -97,6 +97,13 @@ static inline uint64_t get_divbound(int32_t z, int64_t k) {
 
 }
 
+intentry* init_entry() {
+  intentry* first = malloc(sizeof(intentry));
+	first->x = 1;
+	first->next = NULL;
+  return first;
+}
+
 intentry* append_entry(uint32_t x) {
 	intentry* next = malloc(sizeof(intentry));
 	next->x = x;
@@ -105,8 +112,6 @@ intentry* append_entry(uint32_t x) {
 }
 
 // returns the first entry in a linked list of the divisors of k
-// potential optimisation: sort the list whilst inserting elements
-// i am scared to touch it
 intentry* get_divisors(int32_t z, uint64_t x, int64_t k) {
 	int l, e[15];
   uint64_t p[15];
@@ -114,9 +119,7 @@ intentry* get_divisors(int32_t z, uint64_t x, int64_t k) {
 	const uint64_t DIVBOUND = get_divbound(z, k);
 
 	// creates and initializes the first entry
-  intentry* first = malloc(sizeof(intentry)), * cur_mul, * cur_iter;
-	first->x = 1;
-	first->next = NULL;
+  intentry* base, * iter, * first = init_entry();
 	if (x==1)
 		return first;
 	// store the prime divisors in p, their multiplicity in e, and the number of unique prime divisors in l
@@ -126,30 +129,32 @@ intentry* get_divisors(int32_t z, uint64_t x, int64_t k) {
 		// iterate as per multiplicity of the divisor.
 		while (--e[i] >= 0) {
 			// this is equivalent to S <- S append S * d
-      cur_mul = first;
-			while (cur_mul != NULL) {
-        cur_iter = cur_mul;
-				nextint = p[i] * cur_mul->x;
-				cur_mul = cur_mul->next;
-        if (nextint > DIVBOUND)
+      base = first;
+			while (base != NULL) {
+        if (base->x == p[i] && e[i] < 0)
           goto cont;
-        while (cur_iter->next != NULL) {
-          if (cur_iter->x == p[i] && e[i] < 0)
+        iter = base;
+        nextint = p[i] * base->x;
+        base = base->next;
+        if (nextint >= DIVBOUND)
+          goto cont;
+        while (iter->next != NULL) {
+          if (iter->x == nextint)
             goto cont;
-          cur_iter = cur_iter->next;
+          iter = iter->next;
+        if (iter->x != nextint)
+          iter->next = append_entry(nextint);
         }
-        if (cur_iter->x != nextint)
-          cur_iter->next = append_entry(nextint);
         cont:;
 			}
 		}
-  cur_mul = first;
+  iter = first;
   printf("%ld: ", x);
-  while (cur_mul!= NULL) {
-    printf("%d,", cur_mul->x);
-    cur_mul = cur_mul->next;
+  while (iter != NULL) {
+    printf("%d,", iter->x);
+    iter = iter->next;
   }
-  printf(" z=%d\n", z);
+  printf("z = %d\n", z);
 	return first;
 }
 

@@ -111,6 +111,16 @@ intentry* append_entry(uint32_t x) {
 	return next;
 }
 
+intentry* append_unique(intentry* base, uint32_t nextint) {
+	while (base->next != NULL) {
+		if (nextint == base->x)
+			return
+		base = base->next;
+	}
+	if (nextint != base->x)
+		base->next = append_entry(nextint);
+}
+
 // returns the first entry in a linked list of the divisors of k
 intentry* get_divisors(int32_t z, uint64_t x, int64_t k) {
 	int l, e[15];
@@ -119,7 +129,7 @@ intentry* get_divisors(int32_t z, uint64_t x, int64_t k) {
 	const uint64_t DIVBOUND = get_divbound(z, k);
 
 	// creates and initializes the first entry
-  intentry *base, *iter, *first = init_entry(), *last;
+  intentry *base, *first = init_entry(), *last;
 	last = first;
 	if (x==1)
 		return first;
@@ -140,14 +150,7 @@ intentry* get_divisors(int32_t z, uint64_t x, int64_t k) {
 				nextint = p[i] * base->x;
 				if (nextint > DIVBOUND || nextint > LIM21_t)
 					goto nextentry;
-				iter = base;
-				while (iter->next != NULL) {
-					if (nextint == iter->x)
-						goto nextentry;
-					iter = iter->next;
-				}
-				if (nextint != iter->x)
-					iter->next = append_entry(nextint);
+				append_unique(base, nextint);
 				nextentry: base = base->next;
 			}
 			nextprime:;

@@ -138,7 +138,7 @@ intentry* get_divisors(int32_t z, uint64_t x, int64_t k) {
 				if (base == last->next)
 					goto nextprime;
 				nextint = p[i] * base->x;
-				if (nextint > DIVBOUND)
+				if (nextint > DIVBOUND || nextint > LIM21_t)
 					goto nextentry;
 				iter = base;
 				while (iter->next != NULL) {
@@ -152,14 +152,6 @@ intentry* get_divisors(int32_t z, uint64_t x, int64_t k) {
 			}
 			nextprime:;
 		}
-	printf("%ld\n", DIVBOUND);
-  iter = first;
-  printf("%ld: ", x);
-  while (iter != NULL) {
-    printf("%d,", iter->x);
-    iter = iter->next;
-  }
-  printf("z = %d\n", z);
 	return first;
 }
 

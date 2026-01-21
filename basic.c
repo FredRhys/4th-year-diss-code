@@ -4,7 +4,6 @@
 #include <stdint.h>
 
 #define ALPHA 0.259921049895
-//need to find underlying issue
 #define LIM21_t (int32_t)2097151
 #define CBLIM21_t 9223358842721533951
 
@@ -20,18 +19,18 @@ typedef struct intentry{
 }intentry;
 
 // absolute function for long integers
-static inline uint64_t absl(int64_t x) {
+static inline __int128_t absl(__int128_t x) {
 	return x>=0 ? x : -x;
 }
 
 // squaring function
-static inline uint64_t sq(uint32_t x) {
-	return (int64_t)x * x;
+static inline __int128_t sq(uint64_t x) {
+	return (__int128_t)x * x;
 }
 
 // cubing function; input integers must fit into 21 bits.
-static inline int64_t cb(int32_t x){
-	return (int64_t)x * x * x;
+static inline __int128_t cb(int32_t x){
+	return (__int128_t)x * x * x;
 }
 
 // returns sign of input integer
@@ -45,21 +44,36 @@ int8_t sgn(int64_t x) {
 }
 
 // returns the discriminant of the quadratic that gives potential values for x and y
-int64_t calcdisc(uint32_t d, int64_t k, int32_t z) {
+__int128_t calcdisc(uint32_t d, int64_t k, int32_t z) {
 	return 4 * (d + absl(6*k - cb(z) + z)) - cb(d);
+}
+
+uint64_t intsqrt(__int128_t x) {
+	#define TRUE 1
+	uint64_t x1, prev1 = 1, prev2 = -1, temp;
+	while (TRUE) {
+		x1 = (prev1 + x / prev1) >> 1;
+		if (x1 == prev1)
+			return x1;
+		if (x1 == prev2 && x1 != prev1)
+			return prev1 <= x1 ? prev1 : x1;
+		temp = prev1;
+		prev2 = temp;
+		prev1 = x1;
+	}
 }
 
 // calculates the square root required for calculating potential values for x and y
 // returns affirmative if no issues
 uint8_t calcsqrt(uint64_t* restrict _sqrt, uint32_t d, int64_t k, int32_t z) {
-	int64_t disc = calcdisc(d, k, z);
+	__int128_t disc = calcdisc(d, k, z);
 	const uint64_t _3d = 3 * d;
-	uint32_t sqrt;
+	uint64_t sqrt;
 	if (disc < 0) // i.e. no real square root exists
 		return 0;
 	if (disc % _3d != 0) // i.e. the discriminant is not divisible by 3d
 		return 0;
-	const uint64_t sqrtand = disc/_3d;
+	const __int128_t sqrtand = disc/_3d;
 	sqrt = sqrtl(sqrtand);
 	if (sq(sqrt) == sqrtand) { // i.e., sqrtand is a square number
 		*_sqrt = sqrt;
@@ -93,7 +107,7 @@ static inline uint64_t get_divbound(int32_t z, int64_t k) {
     return ALPHA * z + 1;
 	}
   else
-	return LIM21_t;
+	return INT32_MAX;
 
 }
 
@@ -138,7 +152,7 @@ intentry* get_divisors(int32_t z, uint64_t x, int64_t k) {
 				if (base == last->next)
 					goto nextprime;
 				nextint = p[i] * base->x;
-				if (nextint > DIVBOUND || nextint > LIM21_t)
+				if (nextint > DIVBOUND)
 					goto nextentry;
 				iter = base;
 				while (iter->next != NULL) {

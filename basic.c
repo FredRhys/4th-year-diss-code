@@ -119,35 +119,40 @@ intentry* get_divisors(int32_t z, uint64_t x, int64_t k) {
 	const uint64_t DIVBOUND = get_divbound(z, k);
 
 	// creates and initializes the first entry
-  intentry* base, * iter, * first = init_entry();
+  intentry *base, *iter, *first = init_entry(), *last;
+	last = first;
 	if (x==1)
 		return first;
 	// store the prime divisors in p, their multiplicity in e, and the number of unique prime divisors in l
   l = factor64(p, e, x);
+
 	// iterate through all unique prime divisors
 	for (int i = 0; i < l; ++i)
 		// iterate as per multiplicity of the divisor.
 		while (--e[i] >= 0) {
-			// this is equivalent to S <- S append S * d
-      base = first;
+			// find last element of linked list
+			while (last->next != NULL)
+				last = last->next;
+			base = first;
 			while (base != NULL) {
-        if (base->x == p[i] && e[i] < 0)
-          goto cont;
-        iter = base;
-        nextint = p[i] * base->x;
-        base = base->next;
-        if (nextint >= DIVBOUND)
-          goto cont;
-        while (iter->next != NULL) {
-          if (iter->x == nextint)
-            goto cont;
-          iter = iter->next;
-        if (iter->x != nextint)
-          iter->next = append_entry(nextint);
-        }
-        cont:;
+				if (base == last->next)
+					goto nextprime;
+				nextint = p[i] * base->x;
+				if (nextint > DIVBOUND)
+					goto nextentry;
+				iter = base;
+				while (iter->next != NULL) {
+					if (nextint == iter->x)
+						goto nextentry;
+					iter = iter->next;
+				}
+				if (nextint != iter->x)
+					iter->next = append_entry(nextint);
+				nextentry: base = base->next;
 			}
+			nextprime:;
 		}
+	printf("%ld\n", DIVBOUND);
   iter = first;
   printf("%ld: ", x);
   while (iter != NULL) {

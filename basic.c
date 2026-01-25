@@ -155,30 +155,6 @@ intentry* get_divisors(int32_t z, uint64_t x, int64_t k) {
 	return first;
 }
 
-/*
-
-start = first;
-			// iterates through each existing entry in the list
-			while (start != NULL) {
-				if (p[i] == start->x && e[i] == 0) // issue here
-					break;
-				nextint = p[i] * start->x; // set the next potential entry
-				cur = start; // set the current entry
-				start = start->next; // increment the start entry ready for the next iteration
-				if (nextint >= LIM21_t || nextint >= DIVBOUND) { // skip this iteration if the next potential entry is too large
-					goto cont;
-				}
-				while(cur->next != NULL) { // check if the linked list contains the next potential entry already.
-					if (cur->x == nextint) // skip this start-iteration if the next potential entry is already present
-						goto cont;
-					cur = cur->next;
-				}
-				// append the next entry as it is small enough and not already present
-				if (cur->x != nextint) {
-					cur->next = append_entry(nextint);
-				}
-				cont:; // goto label to skip the iteration*/
-
 // sets x to 0 if x=1,2 as these all give 0 in the tetrahedral number formula
 static inline int64_t canonicize(int64_t x) {
 	return x == 1 || x == 2 ? 0 : x;
@@ -196,7 +172,6 @@ int basic(int32_t z, int64_t k/*, FILE* f*/) {
 	intentry* head = get_divisors(z, _6kmcbzpz, k), * temp;
 	while (head != NULL) {
 		if (calcxy(&x, &y, head->x, k, z) && !r) {
-			//fprintf(f, "%ld = %ldC3 + %ldC3 + %ldC3\n", k, canonicize(x+1), canonicize(y+1), canonicize(z+1));
 		 	r = 1;
 		}
 		temp = head->next;
@@ -218,15 +193,20 @@ uint8_t zloop(int64_t k, int32_t zLIM/*, FILE* f*/) {
 	return 0;
 }
 
-void kloop(int64_t kMIN, int64_t kMAX, int32_t zLIM, FILE* f/*, FILE* e*/) {
+void kloop(int64_t kMIN, int64_t kMAX, int32_t zLIM/*, FILE* e*/) {
 	for (int64_t k = kMIN; k <= kMAX; ++k) {
 		if (k == -2 || k == -1 || k == 0)
 			continue; // we have assumed k does not equal these for our analysis.
 			// -2 = (-1)C3 + (-1)C3
 			// -1 = (-1)C3
 			// 0 = 0
-		if (!zloop(k, zLIM/*, e*/))
+		if (!zloop(k, zLIM/*, e*/)) {
+			char hardname[100];
+			snprintf(hardname, 100, "hards/hard%ld.txt", kMAX);
+			FILE* f = fopen(hardname, "a+");
 			fprintf(f, "%ld\n", k);
+			fclose(f);
+		}
 	}
 }
 
@@ -237,18 +217,14 @@ int main(int argc, char** argv) {
 		fprintf(stderr, "Cannot read factor data\n");
 		return -1;
 	}
-	char hardname[100];
 	//char repname[100];
 	const int64_t kMIN = atoi(argv[1]), kMAX = atoi(argv[2]);
 	const int32_t zLIM = atoi(argv[3]);
 	if (zLIM > LIM21_t)
 		return -1;
-	snprintf(hardname, 100, "hards/hard%ld.txt", kMAX);
-	//snprintf(repname, 100, "reps/rep%ld.txt", kMAX);
-	FILE* f = fopen(hardname, "w");
+	
 	//FILE* e = fopen(repname, "w");
-	kloop(kMIN, kMAX, zLIM, f/*, e*/);
-	fclose(f);
+	kloop(kMIN, kMAX, zLIM/*, e*/);
 	//fclose(e);
 	return 0;
 }
